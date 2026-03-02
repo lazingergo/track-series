@@ -8,6 +8,8 @@ group = 'com'
 version = '0.0.1-SNAPSHOT'
 description = 'track-series-backend'
 
+apply from: "$rootDir/lint.gradle"
+
 java {
     toolchain {
         languageVersion = JavaLanguageVersion.of(21)
