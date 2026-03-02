@@ -18,16 +18,16 @@ public class TvMazeSeriesDto {
     private String summary;
     private String status;
     private LocalDate premiered;
-    private Local ended;
+    private LocalDate ended;
     private List<String> genres;
     private TvMazaImageDto image;
 
     @JsonAlias("_embedded")
-    private Embedded _embedded;
+    private Embedded embedded;
 
     @Data
     @JsonIgnoreProperties(ignoreUnknown = true)
-    private static class Embedded {
-        private List<TvMazeEpisodeDto> episode;
+    public static class Embedded {
+        private List<TvMazeEpisodeDto> episodes;
     }
 }
