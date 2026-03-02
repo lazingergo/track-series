@@ -4,7 +4,6 @@ import com.trackseries.dto.TvMazeSeriesDto;
 import com.trackseries.entity.Episode;
 import com.trackseries.entity.Genre;
 import com.trackseries.entity.Series;
-import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.GenreRepository;
 import com.trackseries.repository.SeriesRepository;
 import jakarta.transaction.Transactional;
@@ -18,6 +17,7 @@ public class TvMazeService {
     private final SeriesRepository seriesRepository;
     private final GenreRepository genreRepository;
     private final RestClient restClient;
+
     public TvMazeService(SeriesRepository seriesRepository,
                          GenreRepository genreRepository,
                          @Value("${tvmaze.api.base-url}") String baseUrl) {
@@ -37,7 +37,7 @@ public class TvMazeService {
         System.out.println("Download series from TVmaze");
 
         TvMazeSeriesDto dto = restClient.get()
-                .uri("/shows/{id}?embed=episodes",tvMazeId)
+                .uri("/shows/{id}?embed=episodes", tvMazeId)
                 .retrieve()
                 .body(TvMazeSeriesDto.class);
 
@@ -55,12 +55,16 @@ public class TvMazeService {
         series.setEnded(dto.getEnded());
 
         if (dto.getImage() != null) {
-            series.setImageUrl(dto.getImage().getOriginal() != null ? dto.getImage().getOriginal() : dto.getImage().getMedium());
+            series.setImageUrl(
+                    dto.getImage().getOriginal() != null
+                            ? dto.getImage().getOriginal()
+                            : dto.getImage().getMedium()
+            );
         }
 
         // genres
         if (dto.getGenres() != null) {
-            for(String genreName : dto.getGenres()) {
+            for (String genreName : dto.getGenres()) {
                 // check if the genre is already exist in the database
                 Genre genre = genreRepository.findByName(genreName)
                         .orElseGet(() -> {

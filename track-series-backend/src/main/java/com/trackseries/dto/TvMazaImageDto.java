@@ -1,7 +1,6 @@
 package com.trackseries.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.trackseries.entity.Series;
 import lombok.Data;
 
 @Data

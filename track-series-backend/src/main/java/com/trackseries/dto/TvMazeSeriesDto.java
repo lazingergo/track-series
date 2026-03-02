@@ -2,10 +2,7 @@ package com.trackseries.dto;
 
 import com.fasterxml.jackson.annotation.JsonAlias;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import jakarta.persistence.Embeddable;
-import jakarta.persistence.Embedded;
 import lombok.Data;
-import org.springframework.cglib.core.Local;
 
 import java.time.LocalDate;
 import java.util.List;
