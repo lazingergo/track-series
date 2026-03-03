@@ -3,6 +3,8 @@ package com.trackseries.repository;
 import com.trackseries.entity.WatchedEpisode;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
+
+import java.util.List;
 import java.util.Optional;
 
 
@@ -11,4 +13,6 @@ public interface WatchedEpisodeRepository extends JpaRepository<WatchedEpisode,L
     Optional<WatchedEpisode> findByUserIdAndEpisodeId(Long userId, Long episodeId);
 
     long countByUserIdAndEpisode_Series_IdAndEpisode_SeasonNumberGreaterThan(Long userId, Long seriesId, Integer seasonNumber);
+
+    List<WatchedEpisode> findByUserIdAndEpisode_Series_Id(Long userId, Long seriesId);
 }
