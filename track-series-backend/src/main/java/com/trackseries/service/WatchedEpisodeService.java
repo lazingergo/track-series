@@ -32,10 +32,11 @@ public class WatchedEpisodeService {
     }
 
     @Transactional
-    public void markEpisodeAsWatched(Long userId, Long episodeId, boolean includePrevious) {
+    public void markEpisodeAsWatched(Long userId, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
         User user = userRepository.findById(userId).orElseThrow();
         Episode currentEpisode = episodeRepository.findById(episodeId).orElseThrow();
         Long seriesId = currentEpisode.getSeries().getId();
+        LocalDateTime dateToSave = (customDate != null) ? customDate : LocalDateTime.now();
 
         if (includePrevious) {
             /*
@@ -47,13 +48,13 @@ public class WatchedEpisodeService {
             List<Episode> allEpisodes = episodeRepository.findBySeriesId(seriesId);
 
             for (Episode ep : allEpisodes) {
-                if (ep.getSeasonNumber() > 0 && isBeforeOrEqual(ep, currentEpisode)) {
-                    saveWatchedIfNotExists(user, ep);
+                if (ep.getSeasonNumber() > 0 && isBeforeOrEqual(ep, currentEpisode)){
+                    saveWatchedIfNotExists(user, ep, dateToSave);
                 }
             }
         } else {
             // just save the marked episode
-            saveWatchedIfNotExists(user, currentEpisode);
+            saveWatchedIfNotExists(user, currentEpisode, dateToSave);
         }
 
         updateSeriesStatus(userId, seriesId);
@@ -69,12 +70,12 @@ public class WatchedEpisodeService {
     }
 
 
-    private void saveWatchedIfNotExists(User user, Episode episode) {
+    private void saveWatchedIfNotExists(User user, Episode episode, LocalDateTime watchedAt) {
         if (watchedEpisodeRepository.findByUserIdAndEpisodeId(user.getId(), episode.getId()).isEmpty()) {
             WatchedEpisode watched = new WatchedEpisode();
             watched.setUser(user);
             watched.setEpisode(episode);
-            watched.setWatchedAt(LocalDateTime.now());
+            watched.setWatchedAt(watchedAt);
             watchedEpisodeRepository.save(watched);
         }
     }
