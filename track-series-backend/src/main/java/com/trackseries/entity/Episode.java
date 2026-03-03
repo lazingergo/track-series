@@ -8,6 +8,8 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "episode")
@@ -36,5 +38,9 @@ public class Episode {
     @JoinColumn(name = "series_id")
     @JsonIgnore
     private Series series;
+
+    @OneToMany(mappedBy = "episode", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<WatchedEpisode> watchedByUsers = new ArrayList<>();
 
 }

@@ -31,4 +31,8 @@ public class User {
     @JsonIgnore
     private List<TrackedSeries> trackedSeries = new ArrayList<>();
 
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
+    private List<WatchedEpisode> watchedEpisodes = new ArrayList<>();
+
 }
