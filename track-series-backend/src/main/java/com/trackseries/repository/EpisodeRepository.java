@@ -13,4 +13,7 @@ public interface EpisodeRepository extends JpaRepository<Episode, Long> {
 
     // counts how many episodes there are in the series after a given season
     long countBySeriesIdAndSeasonNumberGreaterThan(Long seriesId, Integer seasonNumber);
+
+    List<Episode> findBySeriesIdAndSeasonNumberGreaterThanOrderBySeasonNumberAscEpisodeNumberAsc(Long seriesId, Integer seasonNumber);
+
 }
