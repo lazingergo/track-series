@@ -1,5 +1,6 @@
 package com.trackseries.controller;
 
+import com.trackseries.entity.TrackedSeries;
 import com.trackseries.entity.User;
 import com.trackseries.service.WatchedEpisodeService;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -7,6 +8,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+import javax.sound.midi.Track;
 import java.time.LocalDateTime;
 
 @RestController
@@ -26,8 +28,9 @@ public class WatchedEpisodeController {
             @PathVariable Long episodeId,
             @RequestParam(defaultValue = "false") boolean includePrevious,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime watchedAt,
-            @AuthenticationPrincipal User user) { // Spring automatically injects the user from the JWT
+            @AuthenticationPrincipal User user) {
 
+        // Spring automatically injects the user from the JWT
         watchedEpisodeService.markEpisodeAsWatched(user.getId(), episodeId, includePrevious, watchedAt);
         return ResponseEntity.ok().build();
     }
@@ -36,9 +39,12 @@ public class WatchedEpisodeController {
     @DeleteMapping("/watch")
     public ResponseEntity<Void> unwatchEpisode(
             @PathVariable Long episodeId,
-            @AuthenticationPrincipal User user) { // Protected by JWT
+            @AuthenticationPrincipal User user) {
 
+        // Protected by JWT
         watchedEpisodeService.unmarkEpisodeAsWatched(user.getId(), episodeId);
         return ResponseEntity.ok().build();
     }
+
+
 }

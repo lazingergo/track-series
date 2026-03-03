@@ -2,10 +2,12 @@ package com.trackseries.controller;
 
 import com.trackseries.dto.SeriesDetailsDto;
 import com.trackseries.entity.Series;
+import com.trackseries.entity.User;
 import com.trackseries.repository.SeriesRepository;
 import com.trackseries.service.SeriesDetailsService;
 import com.trackseries.service.TvMazeService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -26,22 +28,21 @@ public class SeriesController {
         this.seriesDetailsService = seriesDetailsService;
     }
 
-    // import a sereis form tvMaze
+    // Import a series from tvMaze
     @PostMapping("/import/{tvMazeId}")
     public ResponseEntity<Series> importSeries(@PathVariable Long tvMazeId) {
         Series savedSeries = tvMazeService.fetchAndSaveSeries(tvMazeId);
-
         return ResponseEntity.ok(savedSeries);
     }
 
-    // get all series
+    // Get all series
     @GetMapping
     public ResponseEntity<List<Series>> getAllSeries() {
         List<Series> seriesList = seriesRepository.findAll();
         return ResponseEntity.ok(seriesList);
     }
 
-    // getSeries by ID
+    // Get series by ID
     @GetMapping("/{id}")
     public ResponseEntity<Series> getSeriesById(@PathVariable Long id) {
         return seriesRepository.findById(id)
@@ -49,14 +50,14 @@ public class SeriesController {
                 .orElse(ResponseEntity.notFound().build()); // 404 if the id doesn't exist
     }
 
-    @GetMapping("/users/{userId}/series/{seriesId}/details")
+    // URL: GET /api/series/169/details
+    @GetMapping("/{seriesId}/details")
     public ResponseEntity<SeriesDetailsDto> getSeriesDetailsForUser(
-            @PathVariable Long userId,
-            @PathVariable Long seriesId) {
+            @PathVariable Long seriesId,
+            @AuthenticationPrincipal User user) { // Inject user from JWT token
 
-        SeriesDetailsDto details = seriesDetailsService.getDetailsForUser(userId, seriesId);
+        SeriesDetailsDto details = seriesDetailsService.getDetailsForUser(user.getId(), seriesId);
         return ResponseEntity.ok(details);
     }
-
 
 }

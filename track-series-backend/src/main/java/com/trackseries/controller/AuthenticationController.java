@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/auth") // These endpoints are public (no token needed), as configured in SecurityConfig
+@RequestMapping("/api/auth")
 public class AuthenticationController {
 
     private final AuthenticationService service;
