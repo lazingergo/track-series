@@ -49,13 +49,13 @@ public class AuthenticationService {
         // Spring Security will authenticate the user, throwing an exception if credentials are bad
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        request.getEmail(),
+                        request.getUsername(),
                         request.getPassword()
                 )
         );
 
         // If we reach this line, the user is authenticated. Let's fetch the user and generate a token
-        User user = repository.findByEmail(request.getEmail())
+        User user = repository.findByUsername(request.getUsername())
                 .orElseThrow();
 
         String jwtToken = jwtService.generateToken(user);
