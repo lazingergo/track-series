@@ -18,7 +18,7 @@ public class SeriesDetailsDto {
     private List<EpisodeItem> episodes;
 
     @Data
-    public static class EpisodeItem{
+    public static class EpisodeItem {
         private Long id;
         private Integer seasonNumber;
         private Integer episodeNumber;

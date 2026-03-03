@@ -51,10 +51,11 @@ public class UpNextService {
         Long seriesId = tracked.getSeries().getId();
 
         // get all normal epizode (season > 0), sorted
-        List<Episode> validEpisodes = episodeRepository
-                .findBySeriesIdAndSeasonNumberGreaterThanOrderBySeasonNumberAscEpisodeNumberAsc(seriesId, 0);
+        List<Episode> validEpisodes = episodeRepository.findNextEpisodes(seriesId, 0);
 
-        if (validEpisodes.isEmpty()) return null;
+        if (validEpisodes.isEmpty()) {
+            return null;
+        }
 
         // get the latest watched episode
         Episode highestWatched = null;
@@ -99,9 +100,10 @@ public class UpNextService {
     }
 
     private boolean isAfter(Episode ep1, Episode ep2) {
-        if (ep1.getSeasonNumber() > ep2.getSeasonNumber()) return true;
-        if (ep1.getSeasonNumber().equals(ep2.getSeasonNumber()) && ep1.getEpisodeNumber() > ep2.getEpisodeNumber()) return true;
-        return false;
+        if (ep1.getSeasonNumber() > ep2.getSeasonNumber()) {
+            return true;
+        }
+        return ep1.getSeasonNumber().equals(ep2.getSeasonNumber()) && ep1.getEpisodeNumber() > ep2.getEpisodeNumber();
     }
 }
 

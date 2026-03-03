@@ -18,7 +18,9 @@ public class SeriesController {
     private final SeriesRepository seriesRepository;
     private final SeriesDetailsService seriesDetailsService;
 
-    public SeriesController(TvMazeService tvMazeService, SeriesRepository seriesRepository, SeriesDetailsService seriesDetailsService) {
+    public SeriesController(TvMazeService tvMazeService,
+                            SeriesRepository seriesRepository,
+                            SeriesDetailsService seriesDetailsService) {
         this.tvMazeService = tvMazeService;
         this.seriesRepository = seriesRepository;
         this.seriesDetailsService = seriesDetailsService;
@@ -44,7 +46,7 @@ public class SeriesController {
     public ResponseEntity<Series> getSeriesById(@PathVariable Long id) {
         return seriesRepository.findById(id)
                 .map(ResponseEntity::ok)
-                . orElse(ResponseEntity.notFound().build()); // 404 if the id doesn't exist
+                .orElse(ResponseEntity.notFound().build()); // 404 if the id doesn't exist
     }
 
     @GetMapping("/users/{userId}/series/{seriesId}/details")

@@ -24,7 +24,7 @@ public class UserCollectionController {
     public ResponseEntity<TrackedSeries> addToCollection(
             @PathVariable Long userId,
             @PathVariable Long seriesId,
-            @RequestParam(defaultValue = "PLAN_TO_WATCH") WatchStatus status){
+            @RequestParam(defaultValue = "PLAN_TO_WATCH") WatchStatus status) {
 
         TrackedSeries result = trackedSeriesService.addOrUpdateCollection(userId, seriesId, status);
         return ResponseEntity.ok(result);

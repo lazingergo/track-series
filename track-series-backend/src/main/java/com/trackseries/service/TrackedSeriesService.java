@@ -35,7 +35,7 @@ public class TrackedSeriesService {
 
         // chack if the series is already in the list
 
-        TrackedSeries tracked = trackedSeriesRepository.findByUserIdAndSeriesId(userId,seriesId)
+        TrackedSeries tracked = trackedSeriesRepository.findByUserIdAndSeriesId(userId, seriesId)
                 .orElse(new TrackedSeries());
 
         tracked.setUser(user);

@@ -56,7 +56,7 @@ public class SeriesDetailsService {
                 .collect(Collectors.toSet());
 
         // create episodes
-        List<Episode> allEpisodes = episodeRepository.findBySeriesIdAndSeasonNumberGreaterThanOrderBySeasonNumberAscEpisodeNumberAsc(seriesId, -1);
+        List<Episode> allEpisodes = episodeRepository.findNextEpisodes(seriesId, -1);
 
         List<SeriesDetailsDto.EpisodeItem> episodeItems = allEpisodes.stream().map(ep -> {
             SeriesDetailsDto.EpisodeItem item = new SeriesDetailsDto.EpisodeItem();

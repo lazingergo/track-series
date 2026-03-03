@@ -32,7 +32,7 @@ public class WatchedEpisodeService {
     }
 
     @Transactional
-    public void markEpisodeAsWatched(Long userId, Long episodeId, boolean includePrevious){
+    public void markEpisodeAsWatched(Long userId, Long episodeId, boolean includePrevious) {
         User user = userRepository.findById(userId).orElseThrow();
         Episode currentEpisode = episodeRepository.findById(episodeId).orElseThrow();
         Long seriesId = currentEpisode.getSeries().getId();
@@ -47,7 +47,7 @@ public class WatchedEpisodeService {
             List<Episode> allEpisodes = episodeRepository.findBySeriesId(seriesId);
 
             for (Episode ep : allEpisodes) {
-                if (ep.getSeasonNumber() > 0 && isBeforeOrEqual(ep, currentEpisode)){
+                if (ep.getSeasonNumber() > 0 && isBeforeOrEqual(ep, currentEpisode)) {
                     saveWatchedIfNotExists(user, ep);
                 }
             }
@@ -80,16 +80,18 @@ public class WatchedEpisodeService {
     }
 
     private boolean isBeforeOrEqual(Episode ep, Episode target) {
-        if (ep.getSeasonNumber() < target.getSeasonNumber()) return true;
-        if (ep.getSeasonNumber().equals(target.getSeasonNumber()) && ep.getEpisodeNumber() <= target.getEpisodeNumber()) return true;
-        return false;
+        if (ep.getSeasonNumber() < target.getSeasonNumber()) {
+            return true;
+        }
+        return ep.getSeasonNumber().equals(target.getSeasonNumber())
+                && ep.getEpisodeNumber() <= target.getEpisodeNumber();
     }
 
     private void updateSeriesStatus(Long userId, Long seriesId) {
         // count all "normal" episode
         long totalEpisodes = episodeRepository.countBySeriesIdAndSeasonNumberGreaterThan(seriesId, 0);
 
-        long watchedEpisodes = watchedEpisodeRepository.countByUserIdAndEpisode_Series_IdAndEpisode_SeasonNumberGreaterThan(userId, seriesId, 0);
+        long watchedEpisodes = watchedEpisodeRepository.countNextEpisodes(userId, seriesId, 0);
 
         WatchStatus newStatus = WatchStatus.PLAN_TO_WATCH;
 

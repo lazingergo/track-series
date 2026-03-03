@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 @Entity
-@Table(name="tracked_series")
+@Table(name = "tracked_series")
 @Getter
 @Setter
 @NoArgsConstructor
@@ -23,7 +23,7 @@ public class TrackedSeries {
     private User user;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name="series_id", nullable = false)
+    @JoinColumn(name = "series_id", nullable = false)
     private Series series;
 
     @Enumerated(EnumType.STRING)
