@@ -27,7 +27,7 @@ public class UserCollectionController {
     public ResponseEntity<TrackedSeries> addToCollection(
             @PathVariable Long seriesId,
             @RequestParam(defaultValue = "PLAN_TO_WATCH") WatchStatus status,
-            @AuthenticationPrincipal User user) { // Inject user from JWT token
+            @AuthenticationPrincipal User user) {
 
         TrackedSeries result = trackedSeriesService.addOrUpdateCollection(user.getId(), seriesId, status);
         return ResponseEntity.ok(result);
@@ -35,8 +35,27 @@ public class UserCollectionController {
 
     // URL: GET /api/collection/up-next
     @GetMapping("/up-next")
-    public ResponseEntity<UpNextDto> getUpNext(@AuthenticationPrincipal User user) { // Inject user from JWT token
+    public ResponseEntity<UpNextDto> getUpNext(@AuthenticationPrincipal User user) {
         UpNextDto response = upNextService.getUpNextForUser(user.getId());
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/{seriesId}/rate")
+    public ResponseEntity<TrackedSeries> rateSeries(
+            @PathVariable Long seriesId,
+            @RequestParam Integer value,
+            @AuthenticationPrincipal User user) {
+
+        try {
+            TrackedSeries result = trackedSeriesService.updateRating(user.getId(), seriesId, value);
+            return ResponseEntity.ok(result);
+        } catch (IllegalArgumentException e) {
+            // Return 400 Bad Request if rating is not between 1 and 10
+            return ResponseEntity.badRequest().build();
+        } catch (RuntimeException e) {
+            // Return 404 Not Found if the series is not in the user's collection
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 }

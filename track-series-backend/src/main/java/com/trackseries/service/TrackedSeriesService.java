@@ -43,6 +43,19 @@ public class TrackedSeriesService {
         tracked.setStatus(status);
 
         return trackedSeriesRepository.save(tracked);
-
     }
+
+    @Transactional
+    public  TrackedSeries updateRating(Long userId, Long seriesId, Integer rating) {
+        if (rating != null && rating < 1 || rating > 10) {
+            throw new IllegalArgumentException("Rating must be between 1 and 10");
+        }
+
+        TrackedSeries tracked = trackedSeriesRepository.findByUserIdAndSeriesId(userId, seriesId)
+                .orElseThrow(() -> new RuntimeException("Series not found in user collection. Please add it first."));
+
+        tracked.setRating(rating);
+        return trackedSeriesRepository.save(tracked);
+    }
+
 }
