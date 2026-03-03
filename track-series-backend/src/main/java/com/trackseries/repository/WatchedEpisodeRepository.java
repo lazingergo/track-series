@@ -9,4 +9,6 @@ import java.util.Optional;
 @Repository
 public interface WatchedEpisodeRepository extends JpaRepository<WatchedEpisode,Long> {
     Optional<WatchedEpisode> findByUserIdAndEpisodeId(Long userId, Long episodeId);
+
+    long countByUserIdAndEpisode_Series_IdAndEpisode_SeasonNumberGreaterThan(Long userId, Long seriesId, Integer seasonNumber);
 }
