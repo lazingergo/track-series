@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import api from '../api/client';
 import UpNextCard from '../components/UpNextCard';
 
 export default function Home() {
+  const navigate = useNavigate();
   const [shows, setShows] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
-  // Adatok lekérése a backendről
   const fetchUpNext = async () => {
     try {
       const response = await api.get('/collection/up-next');
@@ -28,7 +29,7 @@ export default function Home() {
     }
   };
 
-  // Az oldal betöltésekor azonnal lehúzzuk az adatokat
+
   useEffect(() => {
     fetchUpNext();
   }, []);
@@ -60,7 +61,7 @@ export default function Home() {
       {}
       {(!shows || shows.length === 0) ? (
         <div className="text-gray-400 text-center py-12 bg-tvcard rounded-xl border border-gray-800">
-          <p className="text-lg">You are all caught up! 🎉</p>
+          <p className="text-lg">You are all caught up!</p>
           <p className="text-sm mt-2">Search for new shows to add to your collection.</p>
         </div>
       ) : (
@@ -70,7 +71,8 @@ export default function Home() {
             <UpNextCard 
               key={item.episodeId} 
               item={item} 
-              onMarkWatched={handleMarkWatched} 
+              onMarkWatched={handleMarkWatched}
+              onOpenSeries={(seriesId) => navigate(`/series/${seriesId}`)}
             />
           ))}
         </div>

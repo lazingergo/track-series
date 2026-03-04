@@ -4,10 +4,12 @@ import com.trackseries.dto.SeriesDetailsDto;
 import com.trackseries.entity.Episode;
 import com.trackseries.entity.Series;
 import com.trackseries.entity.TrackedSeries;
+import com.trackseries.entity.User;
 import com.trackseries.entity.WatchedEpisode;
 import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.SeriesRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
+import com.trackseries.repository.UserRepository;
 import com.trackseries.repository.WatchedEpisodeRepository;
 import org.springframework.stereotype.Service;
 
@@ -22,15 +24,24 @@ public class SeriesDetailsService {
     private final TrackedSeriesRepository trackedSeriesRepository;
     private final EpisodeRepository episodeRepository;
     private final WatchedEpisodeRepository watchedEpisodeRepository;
+    private final UserRepository userRepository;
 
     public SeriesDetailsService(SeriesRepository seriesRepository,
                                 TrackedSeriesRepository trackedSeriesRepository,
                                 EpisodeRepository episodeRepository,
-                                WatchedEpisodeRepository watchedEpisodeRepository) {
+                                WatchedEpisodeRepository watchedEpisodeRepository,
+                                UserRepository userRepository) {
         this.seriesRepository = seriesRepository;
         this.trackedSeriesRepository = trackedSeriesRepository;
         this.episodeRepository = episodeRepository;
         this.watchedEpisodeRepository = watchedEpisodeRepository;
+        this.userRepository = userRepository;
+    }
+
+    public SeriesDetailsDto getDetailsForUsername(String username, Long seriesId) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+        return getDetailsForUser(user.getId(), seriesId);
     }
 
     public SeriesDetailsDto getDetailsForUser(Long userId, Long seriesId) {

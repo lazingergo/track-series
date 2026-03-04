@@ -32,6 +32,13 @@ public class WatchedEpisodeService {
     }
 
     @Transactional
+    public void markEpisodeAsWatchedByUsername(String username, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+        markEpisodeAsWatched(user.getId(), episodeId, includePrevious, customDate);
+    }
+
+    @Transactional
     public void markEpisodeAsWatched(Long userId, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
         User user = userRepository.findById(userId).orElseThrow();
         Episode currentEpisode = episodeRepository.findById(episodeId).orElseThrow();
@@ -67,6 +74,13 @@ public class WatchedEpisodeService {
 
         Episode currentEpisode = episodeRepository.findById(episodeId).orElseThrow();
         updateSeriesStatus(userId, currentEpisode.getSeries().getId());
+    }
+
+    @Transactional
+    public void unmarkEpisodeAsWatchedByUsername(String username, Long episodeId) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+        unmarkEpisodeAsWatched(user.getId(), episodeId);
     }
 
 

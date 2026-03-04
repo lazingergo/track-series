@@ -11,7 +11,6 @@ import com.trackseries.service.TrackedSeriesService;
 import com.trackseries.service.TvMazeService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -65,9 +64,8 @@ public class SeriesController {
     @GetMapping("/{seriesId}/details")
     public ResponseEntity<SeriesDetailsDto> getSeriesDetailsForUser(
             @PathVariable Long seriesId,
-            @AuthenticationPrincipal User user) {
-
-        SeriesDetailsDto details = seriesDetailsService.getDetailsForUser(user.getId(), seriesId);
+            Authentication authentication) {
+        SeriesDetailsDto details = seriesDetailsService.getDetailsForUsername(authentication.getName(), seriesId);
         return ResponseEntity.ok(details);
     }
 
