@@ -8,6 +8,7 @@ import java.util.List;
 public class UpNextDto {
     private List<NextEpisodeItem> watching;
     private List<NextEpisodeItem> planToWatch;
+    private List<NextEpisodeItem> notWatchedForAWhile;
 
     @Data
     public static class NextEpisodeItem {
