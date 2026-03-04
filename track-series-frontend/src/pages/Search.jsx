@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search as SearchIcon, Plus, Loader2, Check } from 'lucide-react';
+import { Search as SearchIcon, Plus, Loader2 } from 'lucide-react';
 import api from '../api/client';
 
 export default function Search() {
@@ -8,6 +8,7 @@ export default function Search() {
   const [loading, setLoading] = useState(false);
   const [addingId, setAddingId] = useState(null);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState(null);
 
   const handleSearch = async (e) => {
     e.preventDefault();
@@ -15,6 +16,7 @@ export default function Search() {
 
     setLoading(true);
     setError('');
+    setNotice(null);
     try {
       const response = await api.get(`/series/search?q=${encodeURIComponent(query)}`);
       setResults(response.data);
@@ -26,18 +28,17 @@ export default function Search() {
     }
   };
 
-  // A VALÓDI HOZZÁADÁS LOGIKA
   const handleAddSeries = async (tvMazeId) => {
     setAddingId(tvMazeId);
+    setNotice(null);
     try {
 
       await api.post(`/series/import/${tvMazeId}`);
-      
-      alert("Series successfully added to your collection!");
+      setNotice({ type: 'success', message: 'Series successfully added to your collection.' });
       
     } catch (err) {
       console.error("Error adding series:", err);
-      alert(err.response?.data?.message || "Failed to add series.");
+      setNotice({ type: 'error', message: err.response?.data?.message || 'Failed to add series.' });
     } finally {
       setAddingId(null);
     }
@@ -68,6 +69,17 @@ export default function Search() {
       </div>
 
       {error && <div className="text-red-400 text-center">{error}</div>}
+      {notice && (
+        <div
+          className={`text-center rounded-lg p-3 border ${
+            notice.type === 'success'
+              ? 'text-green-300 border-green-700 bg-green-900/30'
+              : 'text-red-300 border-red-700 bg-red-900/30'
+          }`}
+        >
+          {notice.message}
+        </div>
+      )}
 
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
         {results.map((show) => (
