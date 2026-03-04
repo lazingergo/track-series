@@ -35,7 +35,7 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-http://localhost}
       SPRING_PROFILES_ACTIVE: docker
     ports:
-      - "8080:8080"
+      - "8081:8080"
 
   frontend:
     build:
@@ -65,7 +65,7 @@ services:
       DB_PASSWORD: ${DB_ROOT_PASSWORD}
       BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
     volumes:
-      - ./backups:/backups
+      - D:/Drive/trackseries:/backups
     command: >
       sh -c '
       mkdir -p /backups &&
