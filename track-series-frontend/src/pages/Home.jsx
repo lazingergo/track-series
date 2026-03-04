@@ -5,7 +5,11 @@ import UpNextCard from '../components/UpNextCard';
 
 export default function Home() {
   const navigate = useNavigate();
-  const [shows, setShows] = useState([]);
+  const [groups, setGroups] = useState({
+    planToWatch: [],
+    watching: [],
+    notWatchedForAWhile: [],
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -14,12 +18,18 @@ export default function Home() {
       const response = await api.get('/collection/up-next');
       const watching = Array.isArray(response.data?.watching) ? response.data.watching : [];
       const planToWatch = Array.isArray(response.data?.planToWatch) ? response.data.planToWatch : [];
-      const normalized = [...watching, ...planToWatch].map((item) => ({
+      const notWatchedForAWhile = Array.isArray(response.data?.notWatchedForAWhile) ? response.data.notWatchedForAWhile : [];
+
+      const normalize = (items) => items.map((item) => ({
         ...item,
         episodeId: item.nextEpisodeId,
       }));
 
-      setShows(normalized);
+      setGroups({
+        planToWatch: normalize(planToWatch),
+        watching: normalize(watching),
+        notWatchedForAWhile: normalize(notWatchedForAWhile),
+      });
       setError('');
     } catch (err) {
       console.error(err);
@@ -52,29 +62,50 @@ export default function Home() {
     return <div className="text-center text-gray-500 mt-10 animate-pulse">Loading your shows...</div>;
   }
 
+  const sectionConfig = [
+    { key: 'planToWatch', title: "Haven’t Started" },
+    { key: 'watching', title: 'Watching' },
+    { key: 'notWatchedForAWhile', title: "Haven’t Watched for a While" },
+  ];
+
+  const hasAnyShows = sectionConfig.some((section) => (groups[section.key] || []).length > 0);
+
   return (
     <div className="max-w-3xl mx-auto">
-      <h1 className="text-2xl font-bold mb-6 text-white">Up Next to Watch</h1>
+      <h1 className="text-2xl font-bold mb-6 text-white">Up Next by Progress</h1>
       
       {error && <div className="text-red-400 mb-4">{error}</div>}
 
-      {}
-      {(!shows || shows.length === 0) ? (
+      {!hasAnyShows ? (
         <div className="text-gray-400 text-center py-12 bg-tvcard rounded-xl border border-gray-800">
           <p className="text-lg">You are all caught up!</p>
           <p className="text-sm mt-2">Search for new shows to add to your collection.</p>
         </div>
       ) : (
-        /* list cards*/
-        <div className="flex flex-col gap-4">
-          {shows.map((item) => (
-            <UpNextCard 
-              key={item.episodeId} 
-              item={item} 
-              onMarkWatched={handleMarkWatched}
-              onOpenSeries={(seriesId) => navigate(`/series/${seriesId}`)}
-            />
-          ))}
+        <div className="flex flex-col gap-8">
+          {sectionConfig.map((section) => {
+            const items = groups[section.key] || [];
+
+            if (items.length === 0) {
+              return null;
+            }
+
+            return (
+              <section key={section.key} className="flex flex-col gap-4">
+                <h2 className="text-xl font-semibold text-white">{section.title}</h2>
+                <div className="flex flex-col gap-4">
+                  {items.map((item) => (
+                    <UpNextCard
+                      key={`${section.key}-${item.episodeId}`}
+                      item={item}
+                      onMarkWatched={handleMarkWatched}
+                      onOpenSeries={(seriesId) => navigate(`/series/${seriesId}`)}
+                    />
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       )}
     </div>
