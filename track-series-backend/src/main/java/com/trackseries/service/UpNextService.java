@@ -9,6 +9,8 @@ import com.trackseries.enums.WatchStatus;
 import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
 import com.trackseries.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -16,6 +18,8 @@ import java.util.List;
 
 @Service
 public class UpNextService {
+    private static final Logger log = LoggerFactory.getLogger(UpNextService.class);
+
     private final TrackedSeriesRepository trackedSeriesRepository;
     private final EpisodeRepository episodeRepository;
     private final UserRepository userRepository;
@@ -29,6 +33,7 @@ public class UpNextService {
     }
 
     public UpNextDto getUpNextForUsername(String username) {
+        log.debug("Up-next requested for username='{}'", username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
 
@@ -57,6 +62,10 @@ public class UpNextService {
             }
         }
 
+        log.debug("Up-next generated, userId={}, watchingCount={}, planToWatchCount={}",
+            userId,
+            response.getWatching().size(),
+            response.getPlanToWatch().size());
         return response;
     }
 

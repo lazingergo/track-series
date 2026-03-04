@@ -8,6 +8,8 @@ import com.trackseries.entity.Series;
 import com.trackseries.repository.GenreRepository;
 import com.trackseries.repository.SeriesRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -19,6 +21,7 @@ import java.util.List;
 
 @Service
 public class TvMazeService {
+    private static final Logger log = LoggerFactory.getLogger(TvMazeService.class);
 
     private final SeriesRepository seriesRepository;
     private final GenreRepository genreRepository;
@@ -38,11 +41,11 @@ public class TvMazeService {
     @Transactional
     public Series fetchAndSaveSeries(Long tvMazeId) {
         if (seriesRepository.existsById(tvMazeId)) {
-            System.out.println("The series is already in the database! " + tvMazeId);
+            log.info("Series already exists in DB, tvMazeId={}", tvMazeId);
             return seriesRepository.findById(tvMazeId).orElseThrow();
         }
 
-        System.out.println("Download series from TVmaze");
+        log.info("Importing series from TVMaze, tvMazeId={}", tvMazeId);
 
         TvMazeSeriesDto dto = restClient.get()
                 .uri("/shows/{id}?embed=episodes", tvMazeId)
@@ -50,6 +53,7 @@ public class TvMazeService {
                 .body(TvMazeSeriesDto.class);
 
         if (dto == null) {
+            log.warn("No TVMaze series found for id={}", tvMazeId);
             throw new RuntimeException("No sereis fond with this ID" + tvMazeId);
         }
 
@@ -101,11 +105,17 @@ public class TvMazeService {
             }
         }
 
-        return seriesRepository.save(series);
+        Series saved = seriesRepository.save(series);
+        log.info("Series imported successfully, tvMazeId={}, episodesCount={}, genresCount={}",
+            tvMazeId,
+            saved.getEpisodes().size(),
+            saved.getGenres().size());
+        return saved;
 
     }
 
     public List<SeriesSearchResultDto> searchShows(String query) {
+        log.debug("Searching TVMaze shows with query='{}'", query);
         String url = "https://api.tvmaze.com/search/shows?q=" + query;
 
         // Lekérjük a nyers JSON-t a TVMaze-től
@@ -134,6 +144,7 @@ public class TvMazeService {
                 results.add(dto);
             }
         }
+        log.debug("TVMaze search completed, query='{}', results={}", query, results.size());
         return results;
     }
 

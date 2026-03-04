@@ -5,6 +5,8 @@ import com.trackseries.dto.AuthenticationResponse;
 import com.trackseries.dto.RegisterRequest;
 import com.trackseries.entity.User;
 import com.trackseries.repository.UserRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,6 +14,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthenticationService {
+        private static final Logger log = LoggerFactory.getLogger(AuthenticationService.class);
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
@@ -29,6 +32,7 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse register(RegisterRequest request) {
+                log.info("Register request received for username='{}'", request.getUsername());
         // Create new user and encode the password before saving to the database
         User user = new User();
         user.setUsername(request.getUsername());
@@ -39,6 +43,7 @@ public class AuthenticationService {
 
         // Generate JWT token for the newly registered user
         String jwtToken = jwtService.generateToken(user);
+        log.info("User registered successfully, username='{}'", request.getUsername());
 
         return AuthenticationResponse.builder()
                 .token(jwtToken)
@@ -46,6 +51,7 @@ public class AuthenticationService {
     }
 
     public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        log.info("Login request received for username='{}'", request.getUsername());
         // Spring Security will authenticate the user, throwing an exception if credentials are bad
         authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
@@ -59,6 +65,7 @@ public class AuthenticationService {
                 .orElseThrow();
 
         String jwtToken = jwtService.generateToken(user);
+        log.info("User authenticated successfully, username='{}'", request.getUsername());
 
         return AuthenticationResponse.builder()
                 .token(jwtToken)
