@@ -3,10 +3,12 @@ package com.trackseries.service;
 import com.trackseries.dto.UpNextDto;
 import com.trackseries.entity.Episode;
 import com.trackseries.entity.TrackedSeries;
+import com.trackseries.entity.User;
 import com.trackseries.entity.WatchedEpisode;
 import com.trackseries.enums.WatchStatus;
 import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
+import com.trackseries.repository.UserRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -16,10 +18,21 @@ import java.util.List;
 public class UpNextService {
     private final TrackedSeriesRepository trackedSeriesRepository;
     private final EpisodeRepository episodeRepository;
+    private final UserRepository userRepository;
 
-    public UpNextService(TrackedSeriesRepository trackedSeriesRepository, EpisodeRepository episodeRepository) {
+    public UpNextService(TrackedSeriesRepository trackedSeriesRepository,
+                         EpisodeRepository episodeRepository,
+                         UserRepository userRepository) {
         this.trackedSeriesRepository = trackedSeriesRepository;
         this.episodeRepository = episodeRepository;
+        this.userRepository = userRepository;
+    }
+
+    public UpNextDto getUpNextForUsername(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+
+        return getUpNextForUser(user.getId());
     }
 
     public UpNextDto getUpNextForUser(Long userId) {

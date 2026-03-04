@@ -1,5 +1,6 @@
 package com.trackseries.service;
 
+import com.trackseries.dto.SeriesSearchResultDto;
 import com.trackseries.dto.TvMazeSeriesDto;
 import com.trackseries.entity.Episode;
 import com.trackseries.entity.Genre;
@@ -10,6 +11,11 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.client.RestTemplate;
+import tools.jackson.databind.JsonNode;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Service
 public class TvMazeService {
@@ -17,6 +23,7 @@ public class TvMazeService {
     private final SeriesRepository seriesRepository;
     private final GenreRepository genreRepository;
     private final RestClient restClient;
+    private final RestTemplate restTemplate;
 
     public TvMazeService(SeriesRepository seriesRepository,
                          GenreRepository genreRepository,
@@ -25,6 +32,7 @@ public class TvMazeService {
         this.seriesRepository = seriesRepository;
         this.genreRepository = genreRepository;
         this.restClient = RestClient.create(baseUrl);
+        this.restTemplate = new RestTemplate();
     }
 
     @Transactional
@@ -95,6 +103,38 @@ public class TvMazeService {
 
         return seriesRepository.save(series);
 
+    }
+
+    public List<SeriesSearchResultDto> searchShows(String query) {
+        String url = "https://api.tvmaze.com/search/shows?q=" + query;
+
+        // Lekérjük a nyers JSON-t a TVMaze-től
+        JsonNode rootNode = restTemplate.getForObject(url, JsonNode.class);
+        List<SeriesSearchResultDto> results = new ArrayList<>();
+
+        if (rootNode != null && rootNode.isArray()) {
+            for (JsonNode node : rootNode) {
+                JsonNode show = node.path("show"); // A TVMaze a 'show' objektumba rejti a lényeget
+
+                SeriesSearchResultDto dto = new SeriesSearchResultDto();
+                dto.setTvMazeId(show.path("id").asLong());
+                dto.setTitle(show.path("name").asText());
+
+                // Premier dátum (lehet null is, ha még nem jelent meg)
+                if (!show.path("premiered").isNull() && !show.path("premiered").isMissingNode()) {
+                    dto.setReleaseDate(show.path("premiered").asText());
+                }
+
+                // Kép (szintén lehet null, ha nincs hozzá plakát)
+                JsonNode image = show.path("image");
+                if (!image.isNull() && !image.isMissingNode()) {
+                    dto.setImageUrl(image.path("medium").asText());
+                }
+
+                results.add(dto);
+            }
+        }
+        return results;
     }
 
 }

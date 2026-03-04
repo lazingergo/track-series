@@ -7,6 +7,7 @@ import com.trackseries.enums.WatchStatus;
 import com.trackseries.service.TrackedSeriesService;
 import com.trackseries.service.UpNextService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,16 +28,17 @@ public class UserCollectionController {
     public ResponseEntity<TrackedSeries> addToCollection(
             @PathVariable Long seriesId,
             @RequestParam(defaultValue = "PLAN_TO_WATCH") WatchStatus status,
-            @AuthenticationPrincipal User user) {
+            Authentication authentication) {
 
-        TrackedSeries result = trackedSeriesService.addOrUpdateCollection(user.getId(), seriesId, status);
+        TrackedSeries result = trackedSeriesService.addOrUpdateCollectionByUsername(authentication.getName(), seriesId, status);
         return ResponseEntity.ok(result);
     }
 
     // URL: GET /api/collection/up-next
     @GetMapping("/up-next")
-    public ResponseEntity<UpNextDto> getUpNext(@AuthenticationPrincipal User user) {
-        UpNextDto response = upNextService.getUpNextForUser(user.getId());
+    public ResponseEntity<UpNextDto> getUpNext(Authentication authentication) {
+        String username = authentication.getName();
+        UpNextDto response = upNextService.getUpNextForUsername(username);
         return ResponseEntity.ok(response);
     }
 

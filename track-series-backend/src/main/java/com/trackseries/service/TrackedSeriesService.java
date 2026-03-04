@@ -46,6 +46,14 @@ public class TrackedSeriesService {
     }
 
     @Transactional
+    public TrackedSeries addOrUpdateCollectionByUsername(String username, Long seriesId, WatchStatus status) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+
+        return addOrUpdateCollection(user.getId(), seriesId, status);
+    }
+
+    @Transactional
     public  TrackedSeries updateRating(Long userId, Long seriesId, Integer rating) {
         if (rating != null && rating < 1 || rating > 10) {
             throw new IllegalArgumentException("Rating must be between 1 and 10");
