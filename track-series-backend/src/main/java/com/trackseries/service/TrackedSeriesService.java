@@ -8,10 +8,13 @@ import com.trackseries.repository.SeriesRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
 import com.trackseries.repository.UserRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 @Service
 public class TrackedSeriesService {
+    private static final Logger log = LoggerFactory.getLogger(TrackedSeriesService.class);
 
     private final TrackedSeriesRepository trackedSeriesRepository;
     private final UserRepository userRepository;
@@ -27,6 +30,7 @@ public class TrackedSeriesService {
 
     @Transactional
     public TrackedSeries addOrUpdateCollection(Long userId, Long seriesId, WatchStatus status) {
+        log.debug("Add/update collection called, userId={}, seriesId={}, status={}", userId, seriesId, status);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this id " + userId));
 
@@ -42,11 +46,14 @@ public class TrackedSeriesService {
         tracked.setSeries(series);
         tracked.setStatus(status);
 
-        return trackedSeriesRepository.save(tracked);
+        TrackedSeries saved = trackedSeriesRepository.save(tracked);
+        log.info("Collection updated, userId={}, seriesId={}, status={}", userId, seriesId, status);
+        return saved;
     }
 
     @Transactional
     public TrackedSeries addOrUpdateCollectionByUsername(String username, Long seriesId, WatchStatus status) {
+        log.debug("Add/update collection by username='{}', seriesId={}, status={}", username, seriesId, status);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
 
@@ -56,6 +63,7 @@ public class TrackedSeriesService {
     @Transactional
     public  TrackedSeries updateRating(Long userId, Long seriesId, Integer rating) {
         if (rating != null && rating < 1 || rating > 10) {
+            log.warn("Invalid rating value={}, userId={}, seriesId={}", rating, userId, seriesId);
             throw new IllegalArgumentException("Rating must be between 1 and 10");
         }
 
@@ -63,7 +71,9 @@ public class TrackedSeriesService {
                 .orElseThrow(() -> new RuntimeException("Series not found in user collection. Please add it first."));
 
         tracked.setRating(rating);
-        return trackedSeriesRepository.save(tracked);
+        TrackedSeries saved = trackedSeriesRepository.save(tracked);
+        log.info("Rating updated, userId={}, seriesId={}, rating={}", userId, seriesId, rating);
+        return saved;
     }
 
 }

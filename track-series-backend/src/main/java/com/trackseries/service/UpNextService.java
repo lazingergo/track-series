@@ -10,6 +10,8 @@ import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
 import com.trackseries.repository.UserRepository;
 import com.trackseries.repository.WatchedEpisodeRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -21,6 +23,7 @@ import java.util.Objects;
 @Service
 public class UpNextService {
     private static final int INACTIVE_DAYS_THRESHOLD = 14;
+    private static final Logger log = LoggerFactory.getLogger(UpNextService.class);
 
     private final TrackedSeriesRepository trackedSeriesRepository;
     private final EpisodeRepository episodeRepository;
@@ -38,6 +41,7 @@ public class UpNextService {
     }
 
     public UpNextDto getUpNextForUsername(String username) {
+        log.debug("Up-next requested for username='{}'", username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
 
@@ -82,6 +86,10 @@ public class UpNextService {
         response.getNotWatchedForAWhile().sort(relevanceComparator);
         response.getPlanToWatch().sort(relevanceComparator);
 
+        log.debug("Up-next generated, userId={}, watchingCount={}, planToWatchCount={}",
+            userId,
+            response.getWatching().size(),
+            response.getPlanToWatch().size());
         return response;
     }
 

@@ -11,6 +11,8 @@ import com.trackseries.repository.SeriesRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
 import com.trackseries.repository.UserRepository;
 import com.trackseries.repository.WatchedEpisodeRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,6 +22,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class SeriesDetailsService {
+    private static final Logger log = LoggerFactory.getLogger(SeriesDetailsService.class);
+
     private final SeriesRepository seriesRepository;
     private final TrackedSeriesRepository trackedSeriesRepository;
     private final EpisodeRepository episodeRepository;
@@ -39,6 +43,7 @@ public class SeriesDetailsService {
     }
 
     public SeriesDetailsDto getDetailsForUsername(String username, Long seriesId) {
+        log.debug("Series details requested, username='{}', seriesId={}", username, seriesId);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
         return getDetailsForUser(user.getId(), seriesId);
@@ -80,6 +85,7 @@ public class SeriesDetailsService {
         }).collect(Collectors.toList());
 
         dto.setEpisodes(episodeItems);
+        log.debug("Series details generated, userId={}, seriesId={}, episodes={}", userId, seriesId, episodeItems.size());
 
         return dto;
     }

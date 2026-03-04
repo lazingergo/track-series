@@ -6,6 +6,8 @@ import com.trackseries.entity.User;
 import com.trackseries.enums.WatchStatus;
 import com.trackseries.service.TrackedSeriesService;
 import com.trackseries.service.UpNextService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping("/api/collection")
 public class UserCollectionController {
+    private static final Logger log = LoggerFactory.getLogger(UserCollectionController.class);
 
     private final TrackedSeriesService trackedSeriesService;
     private final UpNextService upNextService;
@@ -30,6 +33,7 @@ public class UserCollectionController {
             @RequestParam(defaultValue = "PLAN_TO_WATCH") WatchStatus status,
             Authentication authentication) {
 
+        log.debug("/api/collection/{} called, username='{}', status={}", seriesId, authentication.getName(), status);
         TrackedSeries result = trackedSeriesService.addOrUpdateCollectionByUsername(authentication.getName(), seriesId, status);
         return ResponseEntity.ok(result);
     }
@@ -38,6 +42,7 @@ public class UserCollectionController {
     @GetMapping("/up-next")
     public ResponseEntity<UpNextDto> getUpNext(Authentication authentication) {
         String username = authentication.getName();
+        log.debug("/api/collection/up-next called, username='{}'", username);
         UpNextDto response = upNextService.getUpNextForUsername(username);
         return ResponseEntity.ok(response);
     }
@@ -47,6 +52,7 @@ public class UserCollectionController {
             @PathVariable Long seriesId,
             @RequestParam Integer value,
             @AuthenticationPrincipal User user) {
+        log.debug("/api/collection/{}/rate called, userId={}, value={}", seriesId, user.getId(), value);
 
         try {
             TrackedSeries result = trackedSeriesService.updateRating(user.getId(), seriesId, value);
