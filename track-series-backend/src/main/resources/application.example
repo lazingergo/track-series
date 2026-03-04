@@ -1,0 +1,7 @@
+# rename this file to: "application-local.properties"
+
+db.host=
+db.port=
+db.name=series_tracker
+db.username=
+db.password=

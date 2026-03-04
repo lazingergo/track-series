@@ -1,0 +1,7 @@
+@import "tailwindcss";
+
+@theme {
+  --color-tvdark: #141414;
+  --color-tvcard: #2f2f2f;
+  --color-tvprimary: #facc15;
+}

@@ -1,0 +1,77 @@
+import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import api from '../api/client';
+
+export default function Profile() {
+  const navigate = useNavigate();
+  const [profile, setProfile] = useState({ username: '', series: [] });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await api.get('/profile/me');
+        setProfile({
+          username: response.data?.username || '',
+          series: Array.isArray(response.data?.series) ? response.data.series : [],
+        });
+        setError('');
+      } catch (err) {
+        console.error(err);
+        setError('Failed to load profile.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProfile();
+  }, []);
+
+  if (loading) {
+    return <div className="text-center text-gray-500 mt-10 animate-pulse">Loading profile...</div>;
+  }
+
+  return (
+    <div className="max-w-5xl mx-auto flex flex-col gap-6">
+      <div className="bg-tvcard p-6 rounded-2xl border border-gray-800 shadow-lg">
+        <h1 className="text-2xl font-bold text-white">Profile</h1>
+        <p className="text-gray-300 mt-2">Username: <span className="text-tvprimary font-semibold">{profile.username}</span></p>
+      </div>
+
+      {error && <div className="text-red-400">{error}</div>}
+
+      {profile.series.length === 0 ? (
+        <div className="text-gray-400 text-center py-12 bg-tvcard rounded-xl border border-gray-800">
+          No series in your profile yet.
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+          {profile.series.map((show) => (
+            <button
+              key={show.seriesId}
+              type="button"
+              onClick={() => navigate(`/series/${show.seriesId}`)}
+              className="bg-tvcard rounded-xl overflow-hidden shadow-lg border border-gray-800 flex flex-col transition hover:scale-[1.02] text-left"
+            >
+              <div className="aspect-[2/3] w-full bg-black">
+                <img
+                  src={show.imageUrl || 'https://via.placeholder.com/210x295?text=No+Poster'}
+                  alt={show.title}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+
+              <div className="p-3">
+                <h3 className="font-bold text-white text-sm line-clamp-2" title={show.title}>
+                  {show.title}
+                </h3>
+                <p className="text-xs text-gray-400 mt-1">{show.status}</p>
+              </div>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
