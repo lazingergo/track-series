@@ -124,4 +124,11 @@ public class TrackedSeriesService {
         return saved;
     }
 
+    @Transactional
+    public TrackedSeries updateRatingByUsername(String username, Long seriesId, Integer rating) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+        return updateRating(user.getId(), seriesId, rating);
+    }
+
 }
