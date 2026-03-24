@@ -33,7 +33,7 @@ export default function Search() {
     setNotice(null);
     try {
 
-      await api.post(`/series/import/${tvMazeId}`);
+      await api.post(`/series/add-to-collection/${tvMazeId}`);
       setResults((prev) => prev.map((show) => (
         show.tvMazeId === tvMazeId ? { ...show, alreadyAdded: true } : show
       )));

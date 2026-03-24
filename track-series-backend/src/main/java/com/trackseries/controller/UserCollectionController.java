@@ -33,8 +33,17 @@ public class UserCollectionController {
             @RequestParam(defaultValue = "PLAN_TO_WATCH") WatchStatus status,
             Authentication authentication) {
 
-        log.debug("/api/collection/{} called, username='{}', status={}", seriesId, authentication.getName(), status);
-        TrackedSeries result = trackedSeriesService.addOrUpdateCollectionByUsername(authentication.getName(), seriesId, status);
+        String username = authentication.getName();
+        log.debug("/api/collection/{} called, username='{}', status={}", seriesId, username, status);
+
+        TrackedSeries result;
+        try {
+            result = trackedSeriesService.updateSeriesStatusByUsername(username, seriesId, status);
+        } catch (RuntimeException ex) {
+            trackedSeriesService.addCollectionByUsername(username, seriesId, status);
+            result = trackedSeriesService.updateSeriesStatusByUsername(username, seriesId, status);
+        }
+
         return ResponseEntity.ok(result);
     }
 
