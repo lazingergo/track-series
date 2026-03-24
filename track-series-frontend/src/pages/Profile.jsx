@@ -8,6 +8,13 @@ export default function Profile() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  const sectionConfig = [
+    { key: 'WATCHING', title: 'Watching' },
+    { key: 'PLAN_TO_WATCH', title: 'Plan to Watch' },
+    { key: 'COMPLETED', title: 'Completed' },
+    { key: 'DROPPED', title: 'Dropped' },
+  ];
+
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -32,6 +39,13 @@ export default function Profile() {
     return <div className="text-center text-gray-500 mt-10 animate-pulse">Loading profile...</div>;
   }
 
+  const groupedSeries = sectionConfig.reduce((acc, section) => {
+    acc[section.key] = profile.series.filter((show) => show.status === section.key);
+    return acc;
+  }, {});
+
+  const hasAnySeries = sectionConfig.some((section) => (groupedSeries[section.key] || []).length > 0);
+
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div className="bg-tvcard p-6 rounded-2xl border border-gray-800 shadow-lg">
@@ -41,35 +55,50 @@ export default function Profile() {
 
       {error && <div className="text-red-400">{error}</div>}
 
-      {profile.series.length === 0 ? (
+      {!hasAnySeries ? (
         <div className="text-gray-400 text-center py-12 bg-tvcard rounded-xl border border-gray-800">
           No series in your profile yet.
         </div>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-          {profile.series.map((show) => (
-            <button
-              key={show.seriesId}
-              type="button"
-              onClick={() => navigate(`/series/${show.seriesId}`)}
-              className="bg-tvcard rounded-xl overflow-hidden shadow-lg border border-gray-800 flex flex-col transition hover:scale-[1.02] text-left"
-            >
-              <div className="aspect-[2/3] w-full bg-black">
-                <img
-                  src={show.imageUrl || 'https://via.placeholder.com/210x295?text=No+Poster'}
-                  alt={show.title}
-                  className="w-full h-full object-cover"
-                />
-              </div>
+        <div className="flex flex-col gap-8">
+          {sectionConfig.map((section) => {
+            const items = groupedSeries[section.key] || [];
 
-              <div className="p-3">
-                <h3 className="font-bold text-white text-sm line-clamp-2" title={show.title}>
-                  {show.title}
-                </h3>
-                <p className="text-xs text-gray-400 mt-1">{show.status}</p>
-              </div>
-            </button>
-          ))}
+            if (items.length === 0) {
+              return null;
+            }
+
+            return (
+              <section key={section.key} className="flex flex-col gap-4">
+                <h2 className="text-xl font-semibold text-white">{section.title}</h2>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                  {items.map((show) => (
+                    <button
+                      key={show.seriesId}
+                      type="button"
+                      onClick={() => navigate(`/series/${show.seriesId}`)}
+                      className="bg-tvcard rounded-xl overflow-hidden shadow-lg border border-gray-800 flex flex-col transition hover:scale-[1.02] text-left"
+                    >
+                      <div className="aspect-[2/3] w-full bg-black">
+                        <img
+                          src={show.imageUrl || 'https://via.placeholder.com/210x295?text=No+Poster'}
+                          alt={show.title}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+
+                      <div className="p-3">
+                        <h3 className="font-bold text-white text-sm line-clamp-2" title={show.title}>
+                          {show.title}
+                        </h3>
+                        <p className="text-xs text-gray-400 mt-1">{show.status}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </section>
+            );
+          })}
         </div>
       )}
     </div>
