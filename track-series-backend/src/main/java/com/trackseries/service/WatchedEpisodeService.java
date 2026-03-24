@@ -36,7 +36,7 @@ public class WatchedEpisodeService {
     }
 
     @Transactional
-    public void markEpisodeAsWatchedByUsername(String username, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
+    public void markEpisodeAsWatchedForUsername(String username, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
         log.debug("Mark watched by username='{}', episodeId={}, includePrevious={}, customDate={}",
             username, episodeId, includePrevious, customDate);
         User user = userRepository.findByUsername(username)
@@ -88,7 +88,7 @@ public class WatchedEpisodeService {
     }
 
     @Transactional
-    public void unmarkEpisodeAsWatchedByUsername(String username, Long episodeId) {
+    public void unmarkEpisodeAsWatchedForUsername(String username, Long episodeId) {
         log.debug("Unmark watched by username='{}', episodeId={}", username, episodeId);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));

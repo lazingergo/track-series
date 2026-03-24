@@ -33,23 +33,26 @@ public class UserCollectionController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/{seriesId}")
-    public ResponseEntity<TrackedSeries> setStatus(
+    @PostMapping("/set-status/{seriesId}/{status}")
+    public ResponseEntity<TrackedSeries> setStatusSeries(
             @PathVariable Long seriesId,
-            @RequestParam(defaultValue = "PLAN_TO_WATCH") WatchStatus status,
+            @PathVariable WatchStatus status,
             Authentication authentication) {
         String username = authentication.getName();
-        log.debug("/api/collection/{} called, username='{}', status={}", seriesId, username, status);
+        log.debug("/api/collection/set-status/{}/{} called, username='{}'", seriesId, status, username);
 
-        TrackedSeries result;
         try {
-            result = trackedSeriesService.updateSeriesStatusByUsername(username, seriesId, status);
+            TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(username, seriesId, status);
+            return ResponseEntity.ok(result);
         } catch (RuntimeException ex) {
-            trackedSeriesService.addCollectionByUsername(username, seriesId, status);
-            result = trackedSeriesService.updateSeriesStatusByUsername(username, seriesId, status);
+            try {
+                trackedSeriesService.addSeriesToCollectionForUsername(username, seriesId, status);
+                TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(username, seriesId, status);
+                return ResponseEntity.ok(result);
+            } catch (RuntimeException e) {
+                return ResponseEntity.notFound().build();
+            }
         }
-
-        return ResponseEntity.ok(result);
     }
 
     @PostMapping("/{seriesId}/rate")
@@ -61,7 +64,7 @@ public class UserCollectionController {
         log.debug("/api/collection/{}/rate called, username='{}', value={}", seriesId, username, value);
 
         try {
-            TrackedSeries result = trackedSeriesService.updateRatingByUsername(username, seriesId, value);
+            TrackedSeries result = trackedSeriesService.updateSeriesRatingForUsername(username, seriesId, value);
             return ResponseEntity.ok(result);
         } catch (IllegalArgumentException e) {
             // Return 400 Bad Request if rating is not between 1 and 10

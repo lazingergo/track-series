@@ -23,7 +23,7 @@ public class ProfileService {
         this.trackedSeriesRepository = trackedSeriesRepository;
     }
 
-    public ProfileDto getProfileByUsername(String username) {
+    public ProfileDto getProfileForUsername(String username) {
         log.debug("Profile requested for username='{}'", username);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));

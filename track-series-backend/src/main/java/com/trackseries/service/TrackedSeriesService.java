@@ -56,12 +56,12 @@ public class TrackedSeriesService {
     }
 
     @Transactional
-    public Series addCollectionByUsername(String username, Long tvMazeId) {
-        return addCollectionByUsername(username, tvMazeId, WatchStatus.PLAN_TO_WATCH);
+    public Series addSeriesToCollectionForUsername(String username, Long tvMazeId) {
+        return addSeriesToCollectionForUsername(username, tvMazeId, WatchStatus.PLAN_TO_WATCH);
     }
 
     @Transactional
-    public Series addCollectionByUsername(String username, Long tvMazeId, WatchStatus status) {
+    public Series addSeriesToCollectionForUsername(String username, Long tvMazeId, WatchStatus status) {
         log.debug("Add collection called, username='{}', tvMazeId={}, status={}", username, tvMazeId, status);
 
         User user = userRepository.findByUsername(username)
@@ -93,7 +93,7 @@ public class TrackedSeriesService {
     }
 
     @Transactional
-    public TrackedSeries updateSeriesStatusByUsername(String username, Long seriesId, WatchStatus status) {
+    public TrackedSeries updateSeriesStatusForUsername(String username, Long seriesId, WatchStatus status) {
         log.debug("Update status called, username='{}', seriesId={}, status={}", username, seriesId, status);
 
         User user = userRepository.findByUsername(username)
@@ -125,7 +125,7 @@ public class TrackedSeriesService {
     }
 
     @Transactional
-    public TrackedSeries updateRatingByUsername(String username, Long seriesId, Integer rating) {
+    public TrackedSeries updateSeriesRatingForUsername(String username, Long seriesId, Integer rating) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
         return updateRating(user.getId(), seriesId, rating);

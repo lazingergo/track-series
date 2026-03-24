@@ -35,7 +35,7 @@ public class WatchedEpisodeController {
             authentication.getName(),
             includePrevious,
             watchedAt);
-        watchedEpisodeService.markEpisodeAsWatchedByUsername(authentication.getName(), episodeId, includePrevious, watchedAt);
+        watchedEpisodeService.markEpisodeAsWatchedForUsername(authentication.getName(), episodeId, includePrevious, watchedAt);
         return ResponseEntity.ok().build();
     }
 
@@ -46,7 +46,7 @@ public class WatchedEpisodeController {
             Authentication authentication) {
 
         log.debug("/api/episodes/{}/watch DELETE called, username='{}'", episodeId, authentication.getName());
-        watchedEpisodeService.unmarkEpisodeAsWatchedByUsername(authentication.getName(), episodeId);
+        watchedEpisodeService.unmarkEpisodeAsWatchedForUsername(authentication.getName(), episodeId);
         return ResponseEntity.ok().build();
     }
 
