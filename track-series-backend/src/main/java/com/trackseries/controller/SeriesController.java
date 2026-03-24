@@ -74,9 +74,11 @@ public class SeriesController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<SeriesSearchResultDto>> searchSeries(@RequestParam String q) {
+    public ResponseEntity<List<SeriesSearchResultDto>> searchSeries(
+            @RequestParam String q,
+            Authentication authentication) {
         log.debug("/api/series/search called, query='{}'", q);
-        return ResponseEntity.ok(tvMazeService.searchShows(q));
+        return ResponseEntity.ok(tvMazeService.searchShows(q, authentication.getName()));
     }
 
 }
