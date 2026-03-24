@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Search as SearchIcon, Plus, Loader2 } from 'lucide-react';
+import { Search as SearchIcon, Plus, Loader2, Check } from 'lucide-react';
 import api from '../api/client';
 
 export default function Search() {
@@ -34,6 +34,9 @@ export default function Search() {
     try {
 
       await api.post(`/series/import/${tvMazeId}`);
+      setResults((prev) => prev.map((show) => (
+        show.tvMazeId === tvMazeId ? { ...show, alreadyAdded: true } : show
+      )));
       setNotice({ type: 'success', message: 'Series successfully added to your collection.' });
       
     } catch (err) {
@@ -104,11 +107,13 @@ export default function Search() {
               
               <button 
                 onClick={() => handleAddSeries(show.tvMazeId)}
-                disabled={addingId === show.tvMazeId}
+                disabled={addingId === show.tvMazeId || show.alreadyAdded}
                 className="w-full bg-gray-700 hover:bg-tvprimary hover:text-black text-white py-2 rounded-lg flex items-center justify-center gap-1 transition text-sm font-medium mt-auto disabled:opacity-50"
               >
                 {addingId === show.tvMazeId ? (
                   <Loader2 className="animate-spin" size={16} />
+                ) : show.alreadyAdded ? (
+                  <><Check size={16} /> Added</>
                 ) : (
                   <><Plus size={16} /> Add Show</>
                 )}
