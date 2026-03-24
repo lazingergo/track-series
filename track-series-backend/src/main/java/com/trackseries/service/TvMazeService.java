@@ -2,11 +2,11 @@ package com.trackseries.service;
 
 import com.trackseries.dto.SeriesSearchResultDto;
 import com.trackseries.dto.TvMazeSeriesDto;
-import com.trackseries.entity.Episode;
-import com.trackseries.entity.Genre;
-import com.trackseries.entity.Series;
+import com.trackseries.entity.*;
 import com.trackseries.repository.GenreRepository;
 import com.trackseries.repository.SeriesRepository;
+import com.trackseries.repository.TrackedSeriesRepository;
+import com.trackseries.repository.UserRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -18,6 +18,8 @@ import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class TvMazeService {
@@ -27,15 +29,20 @@ public class TvMazeService {
     private final GenreRepository genreRepository;
     private final RestClient restClient;
     private final RestTemplate restTemplate;
-
+    private final UserRepository userRepository;
+    private final TrackedSeriesRepository trackedSeriesRepository;
     public TvMazeService(SeriesRepository seriesRepository,
                          GenreRepository genreRepository,
-                         @Value("${tvmaze.api.base-url}") String baseUrl) {
+                         @Value("${tvmaze.api.base-url}") String baseUrl,
+                         UserRepository userRepository,
+                         TrackedSeriesRepository trackedSeriesRepository) {
 
         this.seriesRepository = seriesRepository;
         this.genreRepository = genreRepository;
         this.restClient = RestClient.create(baseUrl);
         this.restTemplate = new RestTemplate();
+        this.userRepository = userRepository;
+        this.trackedSeriesRepository = trackedSeriesRepository;
     }
 
     @Transactional
@@ -114,28 +121,38 @@ public class TvMazeService {
 
     }
 
-    public List<SeriesSearchResultDto> searchShows(String query) {
+    public List<SeriesSearchResultDto> searchShows(String query, String username) {
         log.debug("Searching TVMaze shows with query='{}'", query);
         String url = "https://api.tvmaze.com/search/shows?q=" + query;
 
-        // Lekérjük a nyers JSON-t a TVMaze-től
+        // get JSON from TVMaze
         JsonNode rootNode = restTemplate.getForObject(url, JsonNode.class);
         List<SeriesSearchResultDto> results = new ArrayList<>();
 
+        // get user-added series
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+
+        List<TrackedSeries> trackedSeries = trackedSeriesRepository.findByUserId(user.getId());
+        Set<Long> trackedSeriesIds = trackedSeries.stream()
+            .map(item -> item.getSeries().getId())
+            .collect(Collectors.toSet());
+
         if (rootNode != null && rootNode.isArray()) {
             for (JsonNode node : rootNode) {
-                JsonNode show = node.path("show"); // A TVMaze a 'show' objektumba rejti a lényeget
+                JsonNode show = node.path("show");
 
                 SeriesSearchResultDto dto = new SeriesSearchResultDto();
                 dto.setTvMazeId(show.path("id").asLong());
                 dto.setTitle(show.path("name").asText());
+                dto.setAlreadyAdded(trackedSeriesIds.contains(dto.getTvMazeId()));
 
-                // Premier dátum (lehet null is, ha még nem jelent meg)
+                // premier date
                 if (!show.path("premiered").isNull() && !show.path("premiered").isMissingNode()) {
                     dto.setReleaseDate(show.path("premiered").asText());
                 }
 
-                // Kép (szintén lehet null, ha nincs hozzá plakát)
+                // poster
                 JsonNode image = show.path("image");
                 if (!image.isNull() && !image.isMissingNode()) {
                     dto.setImageUrl(image.path("medium").asText());

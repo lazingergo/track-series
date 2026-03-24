@@ -10,6 +10,7 @@ import com.trackseries.service.TrackedSeriesService;
 import com.trackseries.service.TvMazeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
@@ -24,7 +25,7 @@ public class SeriesController {
     private final TvMazeService tvMazeService;
     private final SeriesRepository seriesRepository;
     private final SeriesDetailsService seriesDetailsService;
-    TrackedSeriesService trackedSeriesService;
+    private final TrackedSeriesService trackedSeriesService;
 
     public SeriesController(TvMazeService tvMazeService,
                             SeriesRepository seriesRepository,
@@ -36,16 +37,19 @@ public class SeriesController {
         this.trackedSeriesService = trackedSeriesService;
     }
 
-    // Import a series from tvMaze
-    @PostMapping("/import/{tvMazeId}")
-    public ResponseEntity<Series> importSeries(
+    @PostMapping("/add-to-collection/{tvMazeId}")
+    public ResponseEntity<?> addToCollection(
             @PathVariable Long tvMazeId,
             Authentication authentication
     ) {
-        log.debug("/api/series/import called, username='{}', tvMazeId={}", authentication.getName(), tvMazeId);
-        Series savedSeries = tvMazeService.fetchAndSaveSeries(tvMazeId);
-        trackedSeriesService.addOrUpdateCollectionByUsername(authentication.getName(), savedSeries.getId(), WatchStatus.PLAN_TO_WATCH);
-        return ResponseEntity.ok(savedSeries);
+        log.debug("/api/series/add-to-collection called, username='{}', tvMazeId={}", authentication.getName(), tvMazeId);
+
+        try {
+            Series series = trackedSeriesService.addCollectionByUsername(authentication.getName(), tvMazeId);
+            return ResponseEntity.status(HttpStatus.CREATED).body(series);
+        } catch (IllegalStateException e) {
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());
+        }
     }
 
     // Get all series
@@ -74,9 +78,9 @@ public class SeriesController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<SeriesSearchResultDto>> searchSeries(@RequestParam String q) {
+    public ResponseEntity<List<SeriesSearchResultDto>> searchSeries(@RequestParam String q, Authentication authentication) {
         log.debug("/api/series/search called, query='{}'", q);
-        return ResponseEntity.ok(tvMazeService.searchShows(q));
+        return ResponseEntity.ok(tvMazeService.searchShows(q, authentication.getName()));
     }
 
 }

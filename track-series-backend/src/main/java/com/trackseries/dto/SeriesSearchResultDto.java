@@ -8,4 +8,5 @@ public class SeriesSearchResultDto {
     private String title;
     private String imageUrl;
     private String releaseDate;
+    private Boolean alreadyAdded;
 }
