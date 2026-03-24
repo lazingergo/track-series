@@ -7,6 +7,7 @@ import com.trackseries.enums.WatchStatus;
 import com.trackseries.repository.SeriesRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
 import com.trackseries.repository.UserRepository;
+import com.trackseries.repository.WatchedEpisodeRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,15 +23,18 @@ public class TrackedSeriesService {
     private final UserRepository userRepository;
     private final SeriesRepository seriesRepository;
     private final TvMazeService tvMazeService;
+    private final WatchedEpisodeRepository watchedEpisodeRepository;
 
     public TrackedSeriesService(TrackedSeriesRepository trackedSeriesRepository,
                                 UserRepository userRepository,
                                 SeriesRepository seriesRepository,
-                                TvMazeService tvMazeService) {
+                                TvMazeService tvMazeService,
+                                WatchedEpisodeRepository watchedEpisodeRepository) {
         this.trackedSeriesRepository = trackedSeriesRepository;
         this.userRepository = userRepository;
         this.seriesRepository = seriesRepository;
         this.tvMazeService = tvMazeService;
+        this.watchedEpisodeRepository = watchedEpisodeRepository;
     }
 
     @Transactional
@@ -129,6 +133,20 @@ public class TrackedSeriesService {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
         return updateRating(user.getId(), seriesId, rating);
+    }
+
+    @Transactional
+    public void removeSeriesFromCollectionForUsername(String username, Long seriesId) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+
+        TrackedSeries tracked = trackedSeriesRepository.findByUserIdAndSeriesId(user.getId(), seriesId)
+                .orElseThrow(() -> new RuntimeException("Series not found in user collection"));
+
+        watchedEpisodeRepository.deleteByUserIdAndEpisode_Series_Id(user.getId(), seriesId);
+        trackedSeriesRepository.delete(tracked);
+
+        log.info("Series removed from collection, userId={}, seriesId={}", user.getId(), seriesId);
     }
 
 }
