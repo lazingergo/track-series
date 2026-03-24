@@ -45,7 +45,7 @@ public class SeriesController {
         log.debug("/api/series/add-to-collection called, username='{}', tvMazeId={}", authentication.getName(), tvMazeId);
 
         try {
-            Series series = trackedSeriesService.addCollectionByUsername(authentication.getName(), tvMazeId);
+            Series series = trackedSeriesService.addSeriesToCollectionForUsername(authentication.getName(), tvMazeId);
             return ResponseEntity.status(HttpStatus.CREATED).body(series);
         } catch (IllegalStateException e) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body(e.getMessage());

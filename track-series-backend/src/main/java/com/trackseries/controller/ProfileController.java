@@ -24,6 +24,6 @@ public class ProfileController {
     @GetMapping("/me")
     public ResponseEntity<ProfileDto> getMyProfile(Authentication authentication) {
         log.debug("/api/profile/me called, username='{}'", authentication.getName());
-        return ResponseEntity.ok(profileService.getProfileByUsername(authentication.getName()));
+        return ResponseEntity.ok(profileService.getProfileForUsername(authentication.getName()));
     }
 }
