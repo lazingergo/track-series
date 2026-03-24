@@ -44,7 +44,7 @@ public class SeriesController {
     ) {
         log.debug("/api/series/import called, username='{}', tvMazeId={}", authentication.getName(), tvMazeId);
         Series savedSeries = tvMazeService.fetchAndSaveSeries(tvMazeId);
-        trackedSeriesService.addOrUpdateCollectionByUsername(authentication.getName(), savedSeries.getId(), WatchStatus.WATCHING);
+        trackedSeriesService.addOrUpdateCollectionByUsername(authentication.getName(), savedSeries.getId(), WatchStatus.PLAN_TO_WATCH);
         return ResponseEntity.ok(savedSeries);
     }
 

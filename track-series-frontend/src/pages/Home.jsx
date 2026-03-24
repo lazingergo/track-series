@@ -6,9 +6,10 @@ import UpNextCard from '../components/UpNextCard';
 export default function Home() {
   const navigate = useNavigate();
   const [groups, setGroups] = useState({
-    planToWatch: [],
     watching: [],
     notWatchedForAWhile: [],
+    planToWatch: [],
+
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -26,9 +27,9 @@ export default function Home() {
       }));
 
       setGroups({
-        planToWatch: normalize(planToWatch),
         watching: normalize(watching),
         notWatchedForAWhile: normalize(notWatchedForAWhile),
+        planToWatch: normalize(planToWatch),
       });
       setError('');
     } catch (err) {
@@ -44,13 +45,9 @@ export default function Home() {
     fetchUpNext();
   }, []);
 
-  // Ez fut le, ha rányomsz a Pipára a kártyán
   const handleMarkWatched = async (episodeId) => {
     try {
-      // Meghívjuk a már korábban megírt biztonságos végpontot!
       await api.post(`/episodes/${episodeId}/watch`);
-      
-      // Sikeres mentés után frissítjük a listát a képernyőn!
       fetchUpNext();
     } catch (err) {
       console.error("Failed to mark as watched", err);
@@ -63,9 +60,9 @@ export default function Home() {
   }
 
   const sectionConfig = [
-    { key: 'planToWatch', title: "Haven’t Started" },
     { key: 'watching', title: 'Watching' },
     { key: 'notWatchedForAWhile', title: "Haven’t Watched for a While" },
+    { key: 'planToWatch', title: "Haven’t Started" },
   ];
 
   const hasAnyShows = sectionConfig.some((section) => (groups[section.key] || []).length > 0);
