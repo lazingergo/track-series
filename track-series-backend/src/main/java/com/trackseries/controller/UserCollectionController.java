@@ -55,6 +55,7 @@ public class UserCollectionController {
         }
     }
 
+
     @PostMapping("/{seriesId}/rate")
     public ResponseEntity<TrackedSeries> rateSeries(
             @PathVariable Long seriesId,
