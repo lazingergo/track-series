@@ -55,6 +55,21 @@ public class UserCollectionController {
         }
     }
 
+    @DeleteMapping("/{seriesId}")
+    public ResponseEntity<Void> removeSeriesFromCollection(
+            @PathVariable Long seriesId,
+            Authentication authentication) {
+        String username = authentication.getName();
+        log.debug("/api/collection/{} DELETE called, username='{}'", seriesId, username);
+
+        try {
+            trackedSeriesService.removeSeriesFromCollectionForUsername(username, seriesId);
+            return ResponseEntity.noContent().build();
+        } catch (RuntimeException e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
 
     @PostMapping("/{seriesId}/rate")
     public ResponseEntity<TrackedSeries> rateSeries(
