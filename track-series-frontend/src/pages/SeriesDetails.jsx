@@ -10,6 +10,7 @@ export default function SeriesDetails() {
   const { seriesId } = useParams();
   const [details, setDetails] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [statusUpdating, setStatusUpdating] = useState(false);
   const [error, setError] = useState('');
   const [watchDialogOpen, setWatchDialogOpen] = useState(false);
   const [selectedEpisode, setSelectedEpisode] = useState(null);
@@ -76,6 +77,26 @@ export default function SeriesDetails() {
     }
   };
 
+  const handleToggleSeriesStatus = async () => {
+    if (!details?.userStatus || statusUpdating) {
+      return;
+    }
+
+    const nextStatus = details.userStatus === 'WATCHING' ? 'DROPPED' : 'WATCHING';
+
+    try {
+      setStatusUpdating(true);
+      setError('');
+      await api.post(`/collection/set-status/${seriesId}/${nextStatus}`);
+      fetchDetails();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to update series status.');
+    } finally {
+      setStatusUpdating(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-center text-gray-500 mt-10 animate-pulse">Loading series...</div>;
   }
@@ -83,6 +104,8 @@ export default function SeriesDetails() {
   if (!details) {
     return <div className="text-red-400">Series not found.</div>;
   }
+
+  const showStatusToggle = details.userStatus === 'WATCHING' || details.userStatus === 'DROPPED';
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
@@ -92,8 +115,24 @@ export default function SeriesDetails() {
           alt={details.title}
           className="w-32 h-44 object-cover rounded-lg bg-black"
         />
-        <div>
-          <h1 className="text-2xl font-bold text-white">{details.title}</h1>
+        <div className="flex-1">
+          <div className="flex items-start justify-between gap-3">
+            <h1 className="text-2xl font-bold text-white">{details.title}</h1>
+            {showStatusToggle && (
+              <button
+                type="button"
+                onClick={handleToggleSeriesStatus}
+                disabled={statusUpdating}
+                className="shrink-0 px-3 py-2 rounded-lg bg-gray-700 hover:bg-tvprimary hover:text-black text-white text-sm font-semibold transition disabled:opacity-50"
+              >
+                {statusUpdating
+                  ? 'Updating...'
+                  : details.userStatus === 'WATCHING'
+                    ? 'Stop Watching'
+                    : 'Continue Watching'}
+              </button>
+            )}
+          </div>
           <p className="text-sm text-gray-400 mt-1">Status: {details.userStatus || 'N/A'}</p>
           <p className="text-gray-300 mt-3 text-sm" dangerouslySetInnerHTML={{ __html: details.summary || '' }} />
         </div>
