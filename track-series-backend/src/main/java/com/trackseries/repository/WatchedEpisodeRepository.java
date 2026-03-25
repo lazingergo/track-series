@@ -27,4 +27,6 @@ public interface WatchedEpisodeRepository extends JpaRepository<WatchedEpisode, 
     List<WatchedEpisode> findByUserIdAndEpisode_Series_Id(
             Long userId, Long seriesId
     );
+
+        void deleteByUserIdAndEpisode_Series_Id(Long userId, Long seriesId);
 }

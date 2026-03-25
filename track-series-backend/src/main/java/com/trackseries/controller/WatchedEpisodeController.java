@@ -1,20 +1,19 @@
 package com.trackseries.controller;
 
-import com.trackseries.entity.TrackedSeries;
-import com.trackseries.entity.User;
 import com.trackseries.service.WatchedEpisodeService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
-import javax.sound.midi.Track;
 import java.time.LocalDateTime;
 
 @RestController
 @RequestMapping("/api/episodes/{episodeId}")
 public class WatchedEpisodeController {
+    private static final Logger log = LoggerFactory.getLogger(WatchedEpisodeController.class);
 
     private final WatchedEpisodeService watchedEpisodeService;
 
@@ -31,7 +30,12 @@ public class WatchedEpisodeController {
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime watchedAt,
             Authentication authentication) {
 
-        watchedEpisodeService.markEpisodeAsWatchedByUsername(authentication.getName(), episodeId, includePrevious, watchedAt);
+        log.debug("/api/episodes/{}/watch POST called, username='{}', includePrevious={}, watchedAt={}",
+            episodeId,
+            authentication.getName(),
+            includePrevious,
+            watchedAt);
+        watchedEpisodeService.markEpisodeAsWatchedForUsername(authentication.getName(), episodeId, includePrevious, watchedAt);
         return ResponseEntity.ok().build();
     }
 
@@ -41,7 +45,8 @@ public class WatchedEpisodeController {
             @PathVariable Long episodeId,
             Authentication authentication) {
 
-        watchedEpisodeService.unmarkEpisodeAsWatchedByUsername(authentication.getName(), episodeId);
+        log.debug("/api/episodes/{}/watch DELETE called, username='{}'", episodeId, authentication.getName());
+        watchedEpisodeService.unmarkEpisodeAsWatchedForUsername(authentication.getName(), episodeId);
         return ResponseEntity.ok().build();
     }
 

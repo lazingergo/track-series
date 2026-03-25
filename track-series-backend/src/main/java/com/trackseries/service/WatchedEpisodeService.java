@@ -8,6 +8,8 @@ import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.UserRepository;
 import com.trackseries.repository.WatchedEpisodeRepository;
 import jakarta.transaction.Transactional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -16,6 +18,8 @@ import java.util.Optional;
 
 @Service
 public class WatchedEpisodeService {
+    private static final Logger log = LoggerFactory.getLogger(WatchedEpisodeService.class);
+
     private final WatchedEpisodeRepository watchedEpisodeRepository;
     private final EpisodeRepository episodeRepository;
     private final TrackedSeriesService trackedSeriesService;
@@ -32,7 +36,9 @@ public class WatchedEpisodeService {
     }
 
     @Transactional
-    public void markEpisodeAsWatchedByUsername(String username, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
+    public void markEpisodeAsWatchedForUsername(String username, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
+        log.debug("Mark watched by username='{}', episodeId={}, includePrevious={}, customDate={}",
+            username, episodeId, includePrevious, customDate);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
         markEpisodeAsWatched(user.getId(), episodeId, includePrevious, customDate);
@@ -40,6 +46,7 @@ public class WatchedEpisodeService {
 
     @Transactional
     public void markEpisodeAsWatched(Long userId, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
+        log.debug("Mark watched called, userId={}, episodeId={}, includePrevious={}", userId, episodeId, includePrevious);
         User user = userRepository.findById(userId).orElseThrow();
         Episode currentEpisode = episodeRepository.findById(episodeId).orElseThrow();
         Long seriesId = currentEpisode.getSeries().getId();
@@ -59,9 +66,11 @@ public class WatchedEpisodeService {
                     saveWatchedIfNotExists(user, ep, dateToSave);
                 }
             }
+            log.info("Marked episode with previous episodes, userId={}, episodeId={}, seriesId={}", userId, episodeId, seriesId);
         } else {
             // just save the marked episode
             saveWatchedIfNotExists(user, currentEpisode, dateToSave);
+            log.info("Marked single episode as watched, userId={}, episodeId={}, seriesId={}", userId, episodeId, seriesId);
         }
 
         updateSeriesStatus(userId, seriesId);
@@ -69,15 +78,18 @@ public class WatchedEpisodeService {
 
     @Transactional
     public void unmarkEpisodeAsWatched(Long userId, Long episodeId) {
+        log.debug("Unmark watched called, userId={}, episodeId={}", userId, episodeId);
         Optional<WatchedEpisode> watched = watchedEpisodeRepository.findByUserIdAndEpisodeId(userId, episodeId);
         watched.ifPresent(watchedEpisodeRepository::delete);
 
         Episode currentEpisode = episodeRepository.findById(episodeId).orElseThrow();
         updateSeriesStatus(userId, currentEpisode.getSeries().getId());
+        log.info("Episode unmarked as watched, userId={}, episodeId={}", userId, episodeId);
     }
 
     @Transactional
-    public void unmarkEpisodeAsWatchedByUsername(String username, Long episodeId) {
+    public void unmarkEpisodeAsWatchedForUsername(String username, Long episodeId) {
+        log.debug("Unmark watched by username='{}', episodeId={}", username, episodeId);
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
         unmarkEpisodeAsWatched(user.getId(), episodeId);
@@ -117,6 +129,7 @@ public class WatchedEpisodeService {
         }
 
         trackedSeriesService.addOrUpdateCollection(userId, seriesId, newStatus);
+        log.debug("Series status recalculated, userId={}, seriesId={}, status={}", userId, seriesId, newStatus);
     }
 
 
