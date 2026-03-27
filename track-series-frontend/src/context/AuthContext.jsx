@@ -3,23 +3,51 @@ import { useNavigate } from 'react-router-dom';
 
 const AuthContext = createContext();
 
-function parseUsernameFromToken(token) {
+function parseTokenPayload(token) {
     if (!token) {
-        return '';
+        return null;
     }
 
     try {
         const payload = token.split('.')[1];
-        const decoded = JSON.parse(atob(payload));
-        return decoded?.sub || '';
+        return JSON.parse(atob(payload));
     } catch {
+        return null;
+    }
+}
+
+function parseUsernameFromToken(token) {et adjon, n
+    const payload = parseTokenPayload(token);
+    return payload?.sub || '';
+}
+
+function isTokenExpired(token) {
+    const payload = parseTokenPayload(token);
+    if (!payload?.exp) {
+        return false;
+    }
+
+    const nowInSeconds = Math.floor(Date.now() / 1000);
+    return payload.exp <= nowInSeconds;
+}
+
+function getInitialToken() {
+    const savedToken = localStorage.getItem('token');
+    if (!savedToken) {
         return '';
     }
+
+    if (isTokenExpired(savedToken)) {
+        localStorage.removeItem('token');
+        return '';
+    }
+
+    return savedToken;
 }
 
 export function AuthProvider({ children }) {
     // check saved tokens
-    const initialToken = localStorage.getItem('token');
+    const initialToken = getInitialToken();
     const [token, setToken] = useState(initialToken);
     const [username, setUsername] = useState(parseUsernameFromToken(initialToken));
     const navigate = useNavigate();
