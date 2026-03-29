@@ -1,16 +1,62 @@
-# React + Vite
+# Track Series Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+React frontend for the Track Series application.
 
-Currently, two official plugins are available:
+This app provides the user interface for searching series, managing tracked shows, and viewing watch-related pages.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Main Responsibilities
 
-## React Compiler
+- Render UI pages and navigation
+- Handle auth state on the client
+- Call backend API endpoints
+- Display search and tracking results
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+- React 19
+- React Router
+- Axios
+- Vite
+- Nginx (in Docker production image)
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Run Locally
+
+### 1. Prerequisites
+
+- Node.js 22+
+- npm
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Start development server
+
+```bash
+npm run dev
+```
+
+Default dev URL:
+- http://localhost:5173
+
+## Build
+
+```bash
+npm run build
+```
+
+Build output is generated in:
+- dist/
+
+## API Communication
+
+- In Docker, frontend API requests are proxied by Nginx from /api to backend service.
+- For local development, ensure backend is running and API base URL is configured as needed.
+
+## Implementation Notes
+
+- Routing and page composition live under src/pages and related components.
+- Shared API communication logic is centralized under src/api.
+- Authentication state is handled via context/hooks in src/context.

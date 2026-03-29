@@ -1,84 +1,82 @@
-# track-series
+# Track Series
 
-Dockerized setup for:
-- frontend (React + Nginx)
-- backend (Spring Boot)
-- database (MySQL)
-- automatic DB backup container
+Track Series is a simple web app to search and follow TV series.
 
-## 1) First-time setup
+You can discover shows, track what you watch, and keep an eye on upcoming episodes in one place.
 
-1. Copy environment template:
+The app uses the free TVMaze API, but it does not rely on it for every request. Data fetched from TVMaze is stored in a local database and reused later. This reduces external API traffic, improves response time, and keeps the app more stable.
+
+## Features
+
+- Search TV series
+- Track selected series
+- Organize watch progress and upcoming episodes
+- Reuse previously fetched API data from the local database
+
+## Why The API + Local Database Approach Is Useful
+
+- Protects the free public API from unnecessary repeated requests
+- Improves performance by serving known data from local storage
+- Reduces risk when the external API is slow or temporarily unavailable
+- Gives better control over your own data lifecycle
+
+## Tech Stack
+
+- Frontend: React + Vite + Nginx
+- Backend: Spring Boot (Java 21)
+- Database: MySQL
+- External data source: TVMaze API (free)
+
+## Quick Start
+
+### 1. Prerequisites
+
+- Docker
+- Docker Compose
+
+### 2. Create environment file
 
 ```bash
 cp .env.example .env
 ```
 
-2. Edit `.env` and set at least:
-- `DB_ROOT_PASSWORD`
-- `JWT_SECRET`
+### 3. Set required values in .env
 
-## 2) Start all services
+- DB_ROOT_PASSWORD
+- JWT_SECRET
+
+Optional values:
+
+- DB_NAME (default: track_series)
+
+### 4. Start the application
 
 ```bash
 docker compose up -d --build
 ```
 
-Services:
-- Frontend: http://localhost
-- Backend: http://localhost:8080
-- DB: localhost:3306
+### 5. Open the app
 
-## 3) Stop services
+- Frontend: http://localhost
+- Backend: http://localhost:8081
+
+### 6. Stop the application
 
 ```bash
 docker compose down
 ```
 
-To also remove DB data volume:
+## Documentation
 
-```bash
-docker compose down -v
-```
+- Backend implementation details: [track-series-backend/README.md](track-series-backend/README.md)
+- Frontend implementation details: [track-series-frontend/README.md](track-series-frontend/README.md)
 
-## 4) Logs
-
-```bash
-docker compose logs -f backend
-docker compose logs -f frontend
-docker compose logs -f db
-docker compose logs -f db-backup
-```
-
-## 5) Backups
-
-Backups are created by `db-backup` service into:
+## Project Structure
 
 ```text
-./backups
+track-series/
+  track-series-frontend/   Frontend application
+  track-series-backend/    Backend API and business logic
+  docker-compose.yml       Full local stack
 ```
-
-Behavior:
-- dump every `BACKUP_INTERVAL_SECONDS` (default: daily)
-- old dumps older than 14 days are deleted
-
-## 6) Restore a backup
-
-Example restore command:
-
-```bash
-cat backups/trackseries-YYYYMMDD-HHMMSS.sql | docker compose exec -T db \
-	mysql -uroot -p"$DB_ROOT_PASSWORD" "$DB_NAME"
-```
-
-## 7) Update after code changes
-
-```bash
-docker compose up -d --build
-```
-
-Recommended update flow:
-1. verify backup exists (`./backups`)
-2. rebuild and restart with command above
-3. check backend/frontend logs
 
