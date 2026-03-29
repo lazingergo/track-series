@@ -3,6 +3,7 @@ package com.trackseries.service;
 import com.trackseries.dto.MonthlyStatsDto;
 import com.trackseries.entity.User;
 import com.trackseries.entity.WatchedEpisode;
+import com.trackseries.exception.ResourceNotFoundException;
 import com.trackseries.repository.UserRepository;
 import com.trackseries.repository.WatchedEpisodeRepository;
 import org.slf4j.Logger;
@@ -28,7 +29,7 @@ public class StatsService {
 
     public MonthlyStatsDto getMonthlyStatsForUsername(String username, Integer requestedYear) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username: " + username));
 
         List<Integer> availableYears = watchedEpisodeRepository.findDistinctWatchedYearsByUserId(user.getId());
 
