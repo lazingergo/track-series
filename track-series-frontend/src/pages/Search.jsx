@@ -12,7 +12,9 @@ export default function Search() {
 
   const handleSearch = async (e) => {
     e.preventDefault();
-    if (!query.trim()) {return;}
+    if (!query.trim()) {
+      return;
+    }
 
     setLoading(true);
     setError('');

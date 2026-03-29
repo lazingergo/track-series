@@ -65,3 +65,12 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+tasks.register('unitTest', Test) {
+    description = 'Runs backend unit tests.'
+    group = 'verification'
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
+}
