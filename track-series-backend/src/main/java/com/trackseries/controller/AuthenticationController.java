@@ -3,6 +3,7 @@ package com.trackseries.controller;
 import com.trackseries.dto.AuthenticationRequest;
 import com.trackseries.dto.AuthenticationResponse;
 import com.trackseries.dto.RegisterRequest;
+import jakarta.validation.Valid;
 import com.trackseries.service.AuthenticationService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -24,13 +25,13 @@ public class AuthenticationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<AuthenticationResponse> register(@RequestBody RegisterRequest request) {
+    public ResponseEntity<AuthenticationResponse> register(@Valid @RequestBody RegisterRequest request) {
         log.debug("/api/auth/register called for username='{}'", request.getUsername());
         return ResponseEntity.ok(service.register(request));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthenticationResponse> authenticate(@RequestBody AuthenticationRequest request) {
+    public ResponseEntity<AuthenticationResponse> authenticate(@Valid @RequestBody AuthenticationRequest request) {
         log.debug("/api/auth/login called for username='{}'", request.getUsername());
         return ResponseEntity.ok(service.authenticate(request));
     }

@@ -4,6 +4,7 @@ import com.trackseries.entity.Episode;
 import com.trackseries.entity.User;
 import com.trackseries.entity.WatchedEpisode;
 import com.trackseries.enums.WatchStatus;
+import com.trackseries.exception.ResourceNotFoundException;
 import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.UserRepository;
 import com.trackseries.repository.WatchedEpisodeRepository;
@@ -13,8 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class WatchedEpisodeService {
@@ -36,19 +40,35 @@ public class WatchedEpisodeService {
     }
 
     @Transactional
-    public void markEpisodeAsWatchedForUsername(String username, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
+    public void markEpisodeAsWatchedForUsername(
+            String username,
+            Long episodeId,
+            boolean includePrevious,
+            LocalDateTime customDate
+    ) {
         log.debug("Mark watched by username='{}', episodeId={}, includePrevious={}, customDate={}",
-            username, episodeId, includePrevious, customDate);
+                username,
+                episodeId,
+                includePrevious,
+                customDate
+        );
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
         markEpisodeAsWatched(user.getId(), episodeId, includePrevious, customDate);
     }
 
     @Transactional
     public void markEpisodeAsWatched(Long userId, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
-        log.debug("Mark watched called, userId={}, episodeId={}, includePrevious={}", userId, episodeId, includePrevious);
-        User user = userRepository.findById(userId).orElseThrow();
-        Episode currentEpisode = episodeRepository.findById(episodeId).orElseThrow();
+        log.debug(
+            "Mark watched called, userId={}, episodeId={}, includePrevious={}",
+            userId,
+            episodeId,
+            includePrevious
+        );
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this id " + userId));
+        Episode currentEpisode = episodeRepository.findById(episodeId)
+            .orElseThrow(() -> new ResourceNotFoundException("Episode not found with id " + episodeId));
         Long seriesId = currentEpisode.getSeries().getId();
         LocalDateTime dateToSave = (customDate != null) ? customDate : LocalDateTime.now();
 
@@ -58,19 +78,50 @@ public class WatchedEpisodeService {
                     then it is possible to treat it as if we had automatically seen the
             */
 
-            // get all episode
-            List<Episode> allEpisodes = episodeRepository.findBySeriesId(seriesId);
+            List<Long> candidateEpisodeIds = episodeRepository.findEpisodeIdsUpTo(
+                    seriesId,
+                    currentEpisode.getSeasonNumber(),
+                    currentEpisode.getEpisodeNumber()
+            );
 
-            for (Episode ep : allEpisodes) {
-                if (ep.getSeasonNumber() > 0 && isBeforeOrEqual(ep, currentEpisode)){
-                    saveWatchedIfNotExists(user, ep, dateToSave);
+            if (!candidateEpisodeIds.isEmpty()) {
+                List<Long> existingIds = watchedEpisodeRepository.findExistingEpisodeIds(userId, candidateEpisodeIds);
+                Set<Long> existingIdSet = new HashSet<>(existingIds);
+
+                List<WatchedEpisode> toSave = new ArrayList<>();
+                for (Long candidateEpisodeId : candidateEpisodeIds) {
+                    if (existingIdSet.contains(candidateEpisodeId)) {
+                        continue;
+                    }
+
+                    Episode episodeRef = episodeRepository.getReferenceById(candidateEpisodeId);
+
+                    WatchedEpisode watched = new WatchedEpisode();
+                    watched.setUser(user);
+                    watched.setEpisode(episodeRef);
+                    watched.setWatchedAt(dateToSave);
+                    toSave.add(watched);
+                }
+
+                if (!toSave.isEmpty()) {
+                    watchedEpisodeRepository.saveAll(toSave);
                 }
             }
-            log.info("Marked episode with previous episodes, userId={}, episodeId={}, seriesId={}", userId, episodeId, seriesId);
+            log.info(
+                    "Marked episode with previous episodes, userId={}, episodeId={}, seriesId={}",
+                    userId,
+                    episodeId,
+                    seriesId
+            );
         } else {
             // just save the marked episode
             saveWatchedIfNotExists(user, currentEpisode, dateToSave);
-            log.info("Marked single episode as watched, userId={}, episodeId={}, seriesId={}", userId, episodeId, seriesId);
+            log.info(
+                    "Marked single episode as watched, userId={}, episodeId={}, seriesId={}",
+                    userId,
+                    episodeId,
+                    seriesId
+            );
         }
 
         updateSeriesStatus(userId, seriesId);
@@ -82,7 +133,8 @@ public class WatchedEpisodeService {
         Optional<WatchedEpisode> watched = watchedEpisodeRepository.findByUserIdAndEpisodeId(userId, episodeId);
         watched.ifPresent(watchedEpisodeRepository::delete);
 
-        Episode currentEpisode = episodeRepository.findById(episodeId).orElseThrow();
+        Episode currentEpisode = episodeRepository.findById(episodeId)
+            .orElseThrow(() -> new ResourceNotFoundException("Episode not found with id " + episodeId));
         updateSeriesStatus(userId, currentEpisode.getSeries().getId());
         log.info("Episode unmarked as watched, userId={}, episodeId={}", userId, episodeId);
     }
@@ -91,7 +143,7 @@ public class WatchedEpisodeService {
     public void unmarkEpisodeAsWatchedForUsername(String username, Long episodeId) {
         log.debug("Unmark watched by username='{}', episodeId={}", username, episodeId);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
         unmarkEpisodeAsWatched(user.getId(), episodeId);
     }
 
@@ -104,14 +156,6 @@ public class WatchedEpisodeService {
             watched.setWatchedAt(watchedAt);
             watchedEpisodeRepository.save(watched);
         }
-    }
-
-    private boolean isBeforeOrEqual(Episode ep, Episode target) {
-        if (ep.getSeasonNumber() < target.getSeasonNumber()) {
-            return true;
-        }
-        return ep.getSeasonNumber().equals(target.getSeasonNumber())
-                && ep.getEpisodeNumber() <= target.getEpisodeNumber();
     }
 
     private void updateSeriesStatus(Long userId, Long seriesId) {

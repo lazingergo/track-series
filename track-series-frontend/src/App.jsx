@@ -5,7 +5,8 @@ import Login from './pages/Login';
 import Search from './pages/Search';
 import Profile from './pages/Profile';
 import SeriesDetails from './pages/SeriesDetails';
-import { useAuth } from './context/AuthContext';
+import Stats from './pages/Stats';
+import { useAuth } from './context/useAuth';
 
 function App() {
   const { isAuthenticated } = useAuth();
@@ -21,7 +22,7 @@ function App() {
           <Route path="/search" element={isAuthenticated ? <Search /> : <Navigate to="/login" />} />
           <Route path="/profile" element={isAuthenticated ? <Profile /> : <Navigate to="/login" />} />
           <Route path="/series/:seriesId" element={isAuthenticated ? <SeriesDetails /> : <Navigate to="/login" />} />
-          <Route path="/stats" element={isAuthenticated ? <div>Stats Page</div> : <Navigate to="/login" />} />
+          <Route path="/stats" element={isAuthenticated ? <Stats /> : <Navigate to="/login" />} />
         </Routes>
       </main>
     </div>

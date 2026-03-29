@@ -1,8 +1,11 @@
 package com.trackseries.controller;
 
+import com.trackseries.dto.UpdateSeriesStatusRequest;
 import com.trackseries.dto.UpNextDto;
 import com.trackseries.entity.TrackedSeries;
 import com.trackseries.enums.WatchStatus;
+import com.trackseries.exception.ResourceNotFoundException;
+import jakarta.validation.Valid;
 import com.trackseries.service.TrackedSeriesService;
 import com.trackseries.service.UpNextService;
 import org.slf4j.Logger;
@@ -44,14 +47,41 @@ public class UserCollectionController {
         try {
             TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(username, seriesId, status);
             return ResponseEntity.ok(result);
-        } catch (RuntimeException ex) {
-            try {
-                trackedSeriesService.addSeriesToCollectionForUsername(username, seriesId, status);
-                TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(username, seriesId, status);
-                return ResponseEntity.ok(result);
-            } catch (RuntimeException e) {
-                return ResponseEntity.notFound().build();
-            }
+        } catch (ResourceNotFoundException ex) {
+            trackedSeriesService.addSeriesToCollectionForUsername(username, seriesId, status);
+            TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(username, seriesId, status);
+            return ResponseEntity.ok(result);
+        }
+    }
+
+    @PatchMapping("/{seriesId}/status")
+    public ResponseEntity<TrackedSeries> updateSeriesStatus(
+            @PathVariable Long seriesId,
+            @Valid @RequestBody UpdateSeriesStatusRequest request,
+            Authentication authentication) {
+        String username = authentication.getName();
+        log.debug(
+            "/api/collection/{}/status PATCH called, username='{}', status={}",
+            seriesId,
+            username,
+            request.getStatus()
+        );
+
+        try {
+            TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(
+                username,
+                seriesId,
+                request.getStatus()
+            );
+            return ResponseEntity.ok(result);
+        } catch (ResourceNotFoundException ex) {
+            trackedSeriesService.addSeriesToCollectionForUsername(username, seriesId, request.getStatus());
+            TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(
+                username,
+                seriesId,
+                request.getStatus()
+            );
+            return ResponseEntity.ok(result);
         }
     }
 
@@ -62,12 +92,8 @@ public class UserCollectionController {
         String username = authentication.getName();
         log.debug("/api/collection/{} DELETE called, username='{}'", seriesId, username);
 
-        try {
-            trackedSeriesService.removeSeriesFromCollectionForUsername(username, seriesId);
-            return ResponseEntity.noContent().build();
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
+        trackedSeriesService.removeSeriesFromCollectionForUsername(username, seriesId);
+        return ResponseEntity.noContent().build();
     }
 
 
@@ -79,16 +105,8 @@ public class UserCollectionController {
         String username = authentication.getName();
         log.debug("/api/collection/{}/rate called, username='{}', value={}", seriesId, username, value);
 
-        try {
-            TrackedSeries result = trackedSeriesService.updateSeriesRatingForUsername(username, seriesId, value);
-            return ResponseEntity.ok(result);
-        } catch (IllegalArgumentException e) {
-            // Return 400 Bad Request if rating is not between 1 and 10
-            return ResponseEntity.badRequest().build();
-        } catch (RuntimeException e) {
-            // Return 404 Not Found if the series is not in the user's collection
-            return ResponseEntity.notFound().build();
-        }
+        TrackedSeries result = trackedSeriesService.updateSeriesRatingForUsername(username, seriesId, value);
+        return ResponseEntity.ok(result);
     }
 
 }

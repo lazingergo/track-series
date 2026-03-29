@@ -9,7 +9,6 @@ export default function Home() {
     watching: [],
     notWatchedForAWhile: [],
     planToWatch: [],
-
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -19,12 +18,15 @@ export default function Home() {
       const response = await api.get('/collection/up-next');
       const watching = Array.isArray(response.data?.watching) ? response.data.watching : [];
       const planToWatch = Array.isArray(response.data?.planToWatch) ? response.data.planToWatch : [];
-      const notWatchedForAWhile = Array.isArray(response.data?.notWatchedForAWhile) ? response.data.notWatchedForAWhile : [];
+      const notWatchedForAWhile = Array.isArray(response.data?.notWatchedForAWhile)
+        ? response.data.notWatchedForAWhile
+        : [];
 
-      const normalize = (items) => items.map((item) => ({
-        ...item,
-        episodeId: item.nextEpisodeId,
-      }));
+      const normalize = (items) =>
+        items.map((item) => ({
+          ...item,
+          episodeId: item.nextEpisodeId,
+        }));
 
       setGroups({
         watching: normalize(watching),
@@ -40,7 +42,6 @@ export default function Home() {
     }
   };
 
-
   useEffect(() => {
     fetchUpNext();
   }, []);
@@ -50,8 +51,8 @@ export default function Home() {
       await api.post(`/episodes/${episodeId}/watch`);
       fetchUpNext();
     } catch (err) {
-      console.error("Failed to mark as watched", err);
-      alert("Failed to mark episode as watched. Please try again.");
+      console.error('Failed to mark as watched', err);
+      alert('Failed to mark episode as watched. Please try again.');
     }
   };
 
@@ -61,8 +62,8 @@ export default function Home() {
 
   const sectionConfig = [
     { key: 'watching', title: 'Watching' },
-    { key: 'notWatchedForAWhile', title: "Haven’t Watched for a While" },
-    { key: 'planToWatch', title: "Haven’t Started" },
+    { key: 'notWatchedForAWhile', title: 'Haven’t Watched for a While' },
+    { key: 'planToWatch', title: 'Haven’t Started' },
   ];
 
   const hasAnyShows = sectionConfig.some((section) => (groups[section.key] || []).length > 0);
@@ -70,7 +71,7 @@ export default function Home() {
   return (
     <div className="max-w-3xl mx-auto">
       <h1 className="text-2xl font-bold mb-6 text-white">Up Next by Progress</h1>
-      
+
       {error && <div className="text-red-400 mb-4">{error}</div>}
 
       {!hasAnyShows ? (

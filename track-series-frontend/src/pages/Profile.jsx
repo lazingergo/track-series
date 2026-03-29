@@ -50,7 +50,9 @@ export default function Profile() {
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div className="bg-tvcard p-6 rounded-2xl border border-gray-800 shadow-lg">
         <h1 className="text-2xl font-bold text-white">Profile</h1>
-        <p className="text-gray-300 mt-2">Username: <span className="text-tvprimary font-semibold">{profile.username}</span></p>
+        <p className="text-gray-300 mt-2">
+          Username: <span className="text-tvprimary font-semibold">{profile.username}</span>
+        </p>
       </div>
 
       {error && <div className="text-red-400">{error}</div>}

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 
@@ -18,7 +18,7 @@ export default function SeriesDetails() {
   const [includePrevious, setIncludePrevious] = useState(false);
   const [watchedAt, setWatchedAt] = useState('');
 
-  const fetchDetails = async () => {
+  const fetchDetails = useCallback(async () => {
     try {
       const response = await api.get(`/series/${seriesId}/details`);
       setDetails(response.data);
@@ -29,11 +29,11 @@ export default function SeriesDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [seriesId]);
 
   useEffect(() => {
     fetchDetails();
-  }, [seriesId]);
+  }, [fetchDetails]);
 
   const handleToggleWatched = async (episode) => {
     try {
@@ -205,7 +205,8 @@ export default function SeriesDetails() {
             <h3 className="text-lg font-semibold text-white">Mark Episode as Watched</h3>
 
             <p className="text-sm text-gray-300">
-              Episode: {selectedEpisode ? formatEpisode(selectedEpisode.seasonNumber, selectedEpisode.episodeNumber) : ''}
+              Episode:{' '}
+              {selectedEpisode ? formatEpisode(selectedEpisode.seasonNumber, selectedEpisode.episodeNumber) : ''}
             </p>
 
             <label className="flex items-center gap-2 text-sm text-gray-200">

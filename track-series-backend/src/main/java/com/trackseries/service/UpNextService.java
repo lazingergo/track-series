@@ -6,6 +6,7 @@ import com.trackseries.entity.TrackedSeries;
 import com.trackseries.entity.User;
 import com.trackseries.entity.WatchedEpisode;
 import com.trackseries.enums.WatchStatus;
+import com.trackseries.exception.ResourceNotFoundException;
 import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
 import com.trackseries.repository.UserRepository;
@@ -17,8 +18,13 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class UpNextService {
@@ -43,7 +49,7 @@ public class UpNextService {
     public UpNextDto getUpNextForUsername(String username) {
         log.debug("Up-next requested for username='{}'", username);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
 
         return getUpNextForUser(user.getId());
     }
@@ -59,13 +65,47 @@ public class UpNextService {
         // get all of the users series
         List<TrackedSeries> allTracked = trackedSeriesRepository.findByUserId(userId);
 
+        if (allTracked.isEmpty()) {
+            return response;
+        }
+
+        List<Long> seriesIds = allTracked.stream()
+                .map(t -> t.getSeries().getId())
+                .distinct()
+                .toList();
+
+        List<Episode> allEpisodesForTrackedSeries = episodeRepository.findNextEpisodesForSeriesIds(seriesIds, 0);
+        Map<Long, List<Episode>> episodesBySeriesId = allEpisodesForTrackedSeries.stream()
+                .collect(Collectors.groupingBy(ep -> ep.getSeries().getId(), HashMap::new, Collectors.toList()));
+
+        Map<Long, Long> episodeIdToSeriesId = new HashMap<>();
+        for (Episode episode : allEpisodesForTrackedSeries) {
+            episodeIdToSeriesId.put(episode.getId(), episode.getSeries().getId());
+        }
+
+        List<WatchedEpisode> allWatchedForTrackedSeries = watchedEpisodeRepository
+            .findByUserIdAndEpisode_Series_IdIn(userId, seriesIds);
+        Map<Long, List<WatchedEpisode>> watchedBySeriesId = new HashMap<>();
+        for (WatchedEpisode watchedEpisode : allWatchedForTrackedSeries) {
+            Long watchedEpisodeId = watchedEpisode.getEpisode().getId();
+            Long seriesId = episodeIdToSeriesId.get(watchedEpisodeId);
+            if (seriesId == null) {
+                continue;
+            }
+            watchedBySeriesId.computeIfAbsent(seriesId, ignored -> new ArrayList<>()).add(watchedEpisode);
+        }
+
         for (TrackedSeries tracked : allTracked) {
             if (tracked.getStatus() == WatchStatus.WATCHING || tracked.getStatus() == WatchStatus.PLAN_TO_WATCH) {
-                UpNextDto.NextEpisodeItem item = calculateNextEpisode(tracked);
+                Long seriesId = tracked.getSeries().getId();
+                List<Episode> validEpisodes = episodesBySeriesId.getOrDefault(seriesId, List.of());
+                List<WatchedEpisode> watchedEpisodes = watchedBySeriesId.getOrDefault(seriesId, List.of());
+
+                UpNextDto.NextEpisodeItem item = calculateNextEpisode(tracked, validEpisodes, watchedEpisodes);
 
                 if (item != null) {
                     if (tracked.getStatus() == WatchStatus.WATCHING) {
-                        if (isNotWatchedForAWhile(userId, tracked.getSeries().getId(), inactivityThreshold)) {
+                        if (isNotWatchedForAWhile(watchedEpisodes, inactivityThreshold)) {
                             response.getNotWatchedForAWhile().add(item);
                         } else {
                             response.getWatching().add(item);
@@ -80,7 +120,10 @@ public class UpNextService {
         Comparator<UpNextDto.NextEpisodeItem> relevanceComparator = Comparator
                 .comparing(UpNextDto.NextEpisodeItem::getSeasonNumber, Comparator.nullsLast(Integer::compareTo))
                 .thenComparing(UpNextDto.NextEpisodeItem::getEpisodeNumber, Comparator.nullsLast(Integer::compareTo))
-                .thenComparing(UpNextDto.NextEpisodeItem::getSeriesTitle, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+                .thenComparing(
+                    UpNextDto.NextEpisodeItem::getSeriesTitle,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                );
 
         response.getWatching().sort(relevanceComparator);
         response.getNotWatchedForAWhile().sort(relevanceComparator);
@@ -93,8 +136,7 @@ public class UpNextService {
         return response;
     }
 
-    private boolean isNotWatchedForAWhile(Long userId, Long seriesId, LocalDateTime threshold) {
-        List<WatchedEpisode> watchedEpisodes = watchedEpisodeRepository.findByUserIdAndEpisode_Series_Id(userId, seriesId);
+    private boolean isNotWatchedForAWhile(List<WatchedEpisode> watchedEpisodes, LocalDateTime threshold) {
         LocalDateTime latestWatchedAt = watchedEpisodes.stream()
                 .map(WatchedEpisode::getWatchedAt)
                 .filter(Objects::nonNull)
@@ -104,22 +146,24 @@ public class UpNextService {
         return latestWatchedAt != null && latestWatchedAt.isBefore(threshold);
     }
 
-    private UpNextDto.NextEpisodeItem calculateNextEpisode(TrackedSeries tracked) {
+    private UpNextDto.NextEpisodeItem calculateNextEpisode(TrackedSeries tracked,
+                                                           List<Episode> validEpisodes,
+                                                           List<WatchedEpisode> watchedEpisodes) {
         Long seriesId = tracked.getSeries().getId();
-
-        // get all normal epizode (season > 0), sorted
-        List<Episode> validEpisodes = episodeRepository.findNextEpisodes(seriesId, 0);
 
         if (validEpisodes.isEmpty()) {
             return null;
         }
 
-        // get the latest watched episode
+        Set<Long> watchedEpisodeIds = watchedEpisodes.stream()
+                .map(w -> w.getEpisode().getId())
+                .collect(Collectors.toCollection(HashSet::new));
+
         Episode highestWatched = null;
-        for (WatchedEpisode we : tracked.getUser().getWatchedEpisodes()) {
-            if (we.getEpisode().getSeries().getId().equals(seriesId)) {
-                if (highestWatched == null || isAfter(we.getEpisode(), highestWatched)) {
-                    highestWatched = we.getEpisode();
+        for (Episode ep : validEpisodes) {
+            if (watchedEpisodeIds.contains(ep.getId())) {
+                if (highestWatched == null || isAfter(ep, highestWatched)) {
+                    highestWatched = ep;
                 }
             }
         }

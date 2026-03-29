@@ -3,6 +3,7 @@ package com.trackseries.service;
 import com.trackseries.dto.ProfileDto;
 import com.trackseries.entity.TrackedSeries;
 import com.trackseries.entity.User;
+import com.trackseries.exception.ResourceNotFoundException;
 import com.trackseries.repository.TrackedSeriesRepository;
 import com.trackseries.repository.UserRepository;
 import org.slf4j.Logger;
@@ -26,7 +27,7 @@ public class ProfileService {
     public ProfileDto getProfileForUsername(String username) {
         log.debug("Profile requested for username='{}'", username);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
 
         List<TrackedSeries> trackedSeries = trackedSeriesRepository.findByUserId(user.getId());
 

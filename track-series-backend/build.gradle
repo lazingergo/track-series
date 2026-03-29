@@ -16,6 +16,19 @@ java {
     }
 }
 
+// Compiler Configuration for Maximum Warning Detection
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xlint:all,-processing,-path'
+    options.deprecation = true
+    options.encoding = 'UTF-8'
+}
+
+// Override test compilation to suppress specific warnings
+tasks.named('compileTestJava') {
+    options.compilerArgs.remove('-Xlint:all,-processing,-path')
+    options.compilerArgs << '-Xlint:none'
+}
+
 repositories {
     mavenCentral()
 }
@@ -23,12 +36,16 @@ repositories {
 dependencies {
     implementation 'org.springframework.boot:spring-boot-starter'
     implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testRuntimeOnly 'com.h2database:h2'
 
     // JPA + Hibernate
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.flywaydb:flyway-core'
+    runtimeOnly 'org.flywaydb:flyway-mysql'
 
     // MySQL
     runtimeOnly 'com.mysql:mysql-connector-j'
@@ -48,4 +65,13 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+tasks.register('unitTest', Test) {
+    description = 'Runs backend unit tests.'
+    group = 'verification'
+    useJUnitPlatform()
+    testLogging {
+        events 'passed', 'skipped', 'failed'
+    }
 }
