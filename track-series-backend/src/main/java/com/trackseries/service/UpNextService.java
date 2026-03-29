@@ -6,6 +6,7 @@ import com.trackseries.entity.TrackedSeries;
 import com.trackseries.entity.User;
 import com.trackseries.entity.WatchedEpisode;
 import com.trackseries.enums.WatchStatus;
+import com.trackseries.exception.ResourceNotFoundException;
 import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
 import com.trackseries.repository.UserRepository;
@@ -43,7 +44,7 @@ public class UpNextService {
     public UpNextDto getUpNextForUsername(String username) {
         log.debug("Up-next requested for username='{}'", username);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
 
         return getUpNextForUser(user.getId());
     }

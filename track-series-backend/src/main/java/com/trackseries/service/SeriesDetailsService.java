@@ -6,6 +6,7 @@ import com.trackseries.entity.Series;
 import com.trackseries.entity.TrackedSeries;
 import com.trackseries.entity.User;
 import com.trackseries.entity.WatchedEpisode;
+import com.trackseries.exception.ResourceNotFoundException;
 import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.SeriesRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
@@ -45,12 +46,13 @@ public class SeriesDetailsService {
     public SeriesDetailsDto getDetailsForUsername(String username, Long seriesId) {
         log.debug("Series details requested, username='{}', seriesId={}", username, seriesId);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+            .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
         return getDetailsForUser(user.getId(), seriesId);
     }
 
     public SeriesDetailsDto getDetailsForUser(Long userId, Long seriesId) {
-        Series series = seriesRepository.findById(seriesId).orElseThrow(() -> new RuntimeException("Series not found"));
+        Series series = seriesRepository.findById(seriesId)
+            .orElseThrow(() -> new ResourceNotFoundException("Series not found with id " + seriesId));
 
         SeriesDetailsDto dto = new SeriesDetailsDto();
         dto.setId(series.getId());

@@ -4,6 +4,7 @@ import com.trackseries.dto.AuthenticationRequest;
 import com.trackseries.dto.AuthenticationResponse;
 import com.trackseries.dto.RegisterRequest;
 import com.trackseries.entity.User;
+import com.trackseries.exception.ResourceNotFoundException;
 import com.trackseries.repository.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -62,7 +63,7 @@ public class AuthenticationService {
 
         // If we reach this line, the user is authenticated. Let's fetch the user and generate a token
         User user = repository.findByUsername(request.getUsername())
-                .orElseThrow();
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with username " + request.getUsername()));
 
         String jwtToken = jwtService.generateToken(user);
         log.info("User authenticated successfully, username='{}'", request.getUsername());

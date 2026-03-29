@@ -4,6 +4,7 @@ import com.trackseries.entity.Episode;
 import com.trackseries.entity.User;
 import com.trackseries.entity.WatchedEpisode;
 import com.trackseries.enums.WatchStatus;
+import com.trackseries.exception.ResourceNotFoundException;
 import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.UserRepository;
 import com.trackseries.repository.WatchedEpisodeRepository;
@@ -40,15 +41,17 @@ public class WatchedEpisodeService {
         log.debug("Mark watched by username='{}', episodeId={}, includePrevious={}, customDate={}",
             username, episodeId, includePrevious, customDate);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
         markEpisodeAsWatched(user.getId(), episodeId, includePrevious, customDate);
     }
 
     @Transactional
     public void markEpisodeAsWatched(Long userId, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
         log.debug("Mark watched called, userId={}, episodeId={}, includePrevious={}", userId, episodeId, includePrevious);
-        User user = userRepository.findById(userId).orElseThrow();
-        Episode currentEpisode = episodeRepository.findById(episodeId).orElseThrow();
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this id " + userId));
+        Episode currentEpisode = episodeRepository.findById(episodeId)
+            .orElseThrow(() -> new ResourceNotFoundException("Episode not found with id " + episodeId));
         Long seriesId = currentEpisode.getSeries().getId();
         LocalDateTime dateToSave = (customDate != null) ? customDate : LocalDateTime.now();
 
@@ -82,7 +85,8 @@ public class WatchedEpisodeService {
         Optional<WatchedEpisode> watched = watchedEpisodeRepository.findByUserIdAndEpisodeId(userId, episodeId);
         watched.ifPresent(watchedEpisodeRepository::delete);
 
-        Episode currentEpisode = episodeRepository.findById(episodeId).orElseThrow();
+        Episode currentEpisode = episodeRepository.findById(episodeId)
+            .orElseThrow(() -> new ResourceNotFoundException("Episode not found with id " + episodeId));
         updateSeriesStatus(userId, currentEpisode.getSeries().getId());
         log.info("Episode unmarked as watched, userId={}, episodeId={}", userId, episodeId);
     }
@@ -91,7 +95,7 @@ public class WatchedEpisodeService {
     public void unmarkEpisodeAsWatchedForUsername(String username, Long episodeId) {
         log.debug("Unmark watched by username='{}', episodeId={}", username, episodeId);
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("User cannot find with this username " + username));
+                .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
         unmarkEpisodeAsWatched(user.getId(), episodeId);
     }
 
