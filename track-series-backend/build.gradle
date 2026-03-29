@@ -16,6 +16,19 @@ java {
     }
 }
 
+// Compiler Configuration for Maximum Warning Detection
+tasks.withType(JavaCompile) {
+    options.compilerArgs << '-Xlint:all,-processing,-path'
+    options.deprecation = true
+    options.encoding = 'UTF-8'
+}
+
+// Override test compilation to suppress specific warnings
+tasks.named('compileTestJava') {
+    options.compilerArgs.remove('-Xlint:all,-processing,-path')
+    options.compilerArgs << '-Xlint:none'
+}
+
 repositories {
     mavenCentral()
 }
