@@ -16,7 +16,7 @@ function parseTokenPayload(token) {
     }
 }
 
-function parseUsernameFromToken(token) {et adjon, n
+function parseUsernameFromToken(token) {
     const payload = parseTokenPayload(token);
     return payload?.sub || '';
 }

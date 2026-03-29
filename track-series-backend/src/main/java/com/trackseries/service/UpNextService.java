@@ -78,9 +78,21 @@ public class UpNextService {
         Map<Long, List<Episode>> episodesBySeriesId = allEpisodesForTrackedSeries.stream()
                 .collect(Collectors.groupingBy(ep -> ep.getSeries().getId(), HashMap::new, Collectors.toList()));
 
+        Map<Long, Long> episodeIdToSeriesId = new HashMap<>();
+        for (Episode episode : allEpisodesForTrackedSeries) {
+            episodeIdToSeriesId.put(episode.getId(), episode.getSeries().getId());
+        }
+
         List<WatchedEpisode> allWatchedForTrackedSeries = watchedEpisodeRepository.findByUserIdAndEpisode_Series_IdIn(userId, seriesIds);
-        Map<Long, List<WatchedEpisode>> watchedBySeriesId = allWatchedForTrackedSeries.stream()
-                .collect(Collectors.groupingBy(w -> w.getEpisode().getSeries().getId(), HashMap::new, Collectors.toList()));
+        Map<Long, List<WatchedEpisode>> watchedBySeriesId = new HashMap<>();
+        for (WatchedEpisode watchedEpisode : allWatchedForTrackedSeries) {
+            Long watchedEpisodeId = watchedEpisode.getEpisode().getId();
+            Long seriesId = episodeIdToSeriesId.get(watchedEpisodeId);
+            if (seriesId == null) {
+                continue;
+            }
+            watchedBySeriesId.computeIfAbsent(seriesId, ignored -> new ArrayList<>()).add(watchedEpisode);
+        }
 
         for (TrackedSeries tracked : allTracked) {
             if (tracked.getStatus() == WatchStatus.WATCHING || tracked.getStatus() == WatchStatus.PLAN_TO_WATCH) {
