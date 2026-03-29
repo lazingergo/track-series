@@ -35,7 +35,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run backend checks
-        run: ./gradlew --no-daemon compileJava checkstyleMain pmdMain spotbugsMain unitTest
+        run: ./gradlew --no-daemon clean qualityCheck unitTest
 
       - name: Upload backend reports
         if: always()

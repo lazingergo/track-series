@@ -22,13 +22,13 @@ def configDir = buildscript.sourceFile.parentFile
 
 checkstyle {
     toolVersion = '10.12.4'
-    ignoreFailures = true
+    ignoreFailures = false
     configFile = file("${configDir}/checkstyle.xml")
 }
 
 spotbugs {
     toolVersion = '4.8.0'
-    ignoreFailures = true
+    ignoreFailures = false
     effort = com.github.spotbugs.snom.Effort.MAX
     reportLevel = com.github.spotbugs.snom.Confidence.valueOf('LOW')
     excludeFilter = file("${configDir}/spotbugs-filter.xml")
@@ -42,7 +42,7 @@ spotbugsMain {
 
 pmd {
     toolVersion = '6.55.0'
-    ignoreFailures = true
+    ignoreFailures = false
     ruleSetFiles = files("${configDir}/pmd-ruleset.xml")
     ruleSets = []
     rulesMinimumPriority = 5
