@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Tv } from 'lucide-react';
 import api from '../api/client';
-import { useAuth } from '../context/AuthContext';
+import { useAuth } from '../context/useAuth';
 
 export default function Login() {
   const [isRegistering, setIsRegistering] = useState(false);

@@ -83,7 +83,8 @@ public class UpNextService {
             episodeIdToSeriesId.put(episode.getId(), episode.getSeries().getId());
         }
 
-        List<WatchedEpisode> allWatchedForTrackedSeries = watchedEpisodeRepository.findByUserIdAndEpisode_Series_IdIn(userId, seriesIds);
+        List<WatchedEpisode> allWatchedForTrackedSeries = watchedEpisodeRepository
+            .findByUserIdAndEpisode_Series_IdIn(userId, seriesIds);
         Map<Long, List<WatchedEpisode>> watchedBySeriesId = new HashMap<>();
         for (WatchedEpisode watchedEpisode : allWatchedForTrackedSeries) {
             Long watchedEpisodeId = watchedEpisode.getEpisode().getId();
@@ -119,7 +120,10 @@ public class UpNextService {
         Comparator<UpNextDto.NextEpisodeItem> relevanceComparator = Comparator
                 .comparing(UpNextDto.NextEpisodeItem::getSeasonNumber, Comparator.nullsLast(Integer::compareTo))
                 .thenComparing(UpNextDto.NextEpisodeItem::getEpisodeNumber, Comparator.nullsLast(Integer::compareTo))
-                .thenComparing(UpNextDto.NextEpisodeItem::getSeriesTitle, Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER));
+                .thenComparing(
+                    UpNextDto.NextEpisodeItem::getSeriesTitle,
+                    Comparator.nullsLast(String.CASE_INSENSITIVE_ORDER)
+                );
 
         response.getWatching().sort(relevanceComparator);
         response.getNotWatchedForAWhile().sort(relevanceComparator);

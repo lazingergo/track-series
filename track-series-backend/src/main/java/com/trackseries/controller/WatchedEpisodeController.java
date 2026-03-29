@@ -27,7 +27,9 @@ public class WatchedEpisodeController {
     public ResponseEntity<Void> watchEpisode(
             @PathVariable Long episodeId,
             @RequestParam(defaultValue = "false") boolean includePrevious,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime watchedAt,
+            @RequestParam(required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)
+            LocalDateTime watchedAt,
             Authentication authentication) {
 
         log.debug("/api/episodes/{}/watch POST called, username='{}', includePrevious={}, watchedAt={}",
@@ -35,7 +37,12 @@ public class WatchedEpisodeController {
             authentication.getName(),
             includePrevious,
             watchedAt);
-        watchedEpisodeService.markEpisodeAsWatchedForUsername(authentication.getName(), episodeId, includePrevious, watchedAt);
+        watchedEpisodeService.markEpisodeAsWatchedForUsername(
+            authentication.getName(),
+            episodeId,
+            includePrevious,
+            watchedAt
+        );
         return ResponseEntity.ok().build();
     }
 

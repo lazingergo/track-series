@@ -60,14 +60,27 @@ public class UserCollectionController {
             @Valid @RequestBody UpdateSeriesStatusRequest request,
             Authentication authentication) {
         String username = authentication.getName();
-        log.debug("/api/collection/{}/status PATCH called, username='{}', status={}", seriesId, username, request.getStatus());
+        log.debug(
+            "/api/collection/{}/status PATCH called, username='{}', status={}",
+            seriesId,
+            username,
+            request.getStatus()
+        );
 
         try {
-            TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(username, seriesId, request.getStatus());
+            TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(
+                username,
+                seriesId,
+                request.getStatus()
+            );
             return ResponseEntity.ok(result);
         } catch (ResourceNotFoundException ex) {
             trackedSeriesService.addSeriesToCollectionForUsername(username, seriesId, request.getStatus());
-            TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(username, seriesId, request.getStatus());
+            TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(
+                username,
+                seriesId,
+                request.getStatus()
+            );
             return ResponseEntity.ok(result);
         }
     }

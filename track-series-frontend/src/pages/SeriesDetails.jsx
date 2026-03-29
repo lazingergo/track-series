@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import api from '../api/client';
 
@@ -18,7 +18,7 @@ export default function SeriesDetails() {
   const [includePrevious, setIncludePrevious] = useState(false);
   const [watchedAt, setWatchedAt] = useState('');
 
-  const fetchDetails = async () => {
+  const fetchDetails = useCallback(async () => {
     try {
       const response = await api.get(`/series/${seriesId}/details`);
       setDetails(response.data);
@@ -29,11 +29,11 @@ export default function SeriesDetails() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [seriesId]);
 
   useEffect(() => {
     fetchDetails();
-  }, [seriesId]);
+  }, [fetchDetails]);
 
   const handleToggleWatched = async (episode) => {
     try {

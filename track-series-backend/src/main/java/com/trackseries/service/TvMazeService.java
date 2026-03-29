@@ -32,6 +32,7 @@ public class TvMazeService {
     private final RestTemplate restTemplate;
     private final UserRepository userRepository;
     private final TrackedSeriesRepository trackedSeriesRepository;
+
     public TvMazeService(SeriesRepository seriesRepository,
                          GenreRepository genreRepository,
                          @Value("${tvmaze.api.base-url}") String baseUrl,
@@ -115,10 +116,12 @@ public class TvMazeService {
         }
 
         Series saved = seriesRepository.save(series);
-        log.info("Series imported successfully, tvMazeId={}, episodesCount={}, genresCount={}",
+        log.info(
+            "Series imported successfully, tvMazeId={}, episodesCount={}, genresCount={}",
             tvMazeId,
             saved.getEpisodes().size(),
-            saved.getGenres().size());
+            saved.getGenres().size()
+        );
         return saved;
 
     }
@@ -146,18 +149,21 @@ public class TvMazeService {
 
                 SeriesSearchResultDto dto = new SeriesSearchResultDto();
                 dto.setTvMazeId(show.path("id").asLong());
-                dto.setTitle(show.path("name").asText());
+                JsonNode nameNode = show.path("name");
+                dto.setTitle(nameNode.isTextual() ? nameNode.textValue() : "");
                 dto.setAlreadyAdded(trackedSeriesIds.contains(dto.getTvMazeId()));
 
                 // premier date
                 if (!show.path("premiered").isNull() && !show.path("premiered").isMissingNode()) {
-                    dto.setReleaseDate(show.path("premiered").asText());
+                    JsonNode premieredNode = show.path("premiered");
+                    dto.setReleaseDate(premieredNode.isTextual() ? premieredNode.textValue() : null);
                 }
 
                 // poster
                 JsonNode image = show.path("image");
                 if (!image.isNull() && !image.isMissingNode()) {
-                    dto.setImageUrl(image.path("medium").asText());
+                    JsonNode mediumNode = image.path("medium");
+                    dto.setImageUrl(mediumNode.isTextual() ? mediumNode.textValue() : null);
                 }
 
                 results.add(dto);

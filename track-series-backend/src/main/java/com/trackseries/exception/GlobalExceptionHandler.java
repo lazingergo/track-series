@@ -4,9 +4,9 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.time.LocalDateTime;
+import java.util.Locale;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -32,21 +33,23 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex,
+                                                        HttpServletRequest request) {
         String message = "Data integrity violation";
         if (ex.getMostSpecificCause() != null && ex.getMostSpecificCause().getMessage() != null
-                && ex.getMostSpecificCause().getMessage().toLowerCase().contains("duplicate")) {
+            && ex.getMostSpecificCause().getMessage().toLowerCase(Locale.ROOT).contains("duplicate")) {
             message = "Duplicate resource";
         }
         return build(HttpStatus.CONFLICT, message, request.getRequestURI());
     }
 
-    @ExceptionHandler({BadRequestException.class, IllegalArgumentException.class, MethodArgumentNotValidException.class})
+    @ExceptionHandler({BadRequestException.class, IllegalArgumentException.class,
+        MethodArgumentNotValidException.class})
     public ResponseEntity<ApiError> handleBadRequest(Exception ex, HttpServletRequest request) {
         String message = ex.getMessage();
 
         if (ex instanceof MethodArgumentNotValidException validationEx
-                && validationEx.getBindingResult().getFieldError() != null) {
+            && validationEx.getBindingResult().getFieldError() != null) {
             var fieldError = validationEx.getBindingResult().getFieldError();
             message = fieldError.getField() + ": " + fieldError.getDefaultMessage();
         }
@@ -54,7 +57,8 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, message, request.getRequestURI());
     }
 
-    @ExceptionHandler({BadCredentialsException.class, AuthenticationException.class, AuthenticationCredentialsNotFoundException.class})
+    @ExceptionHandler({BadCredentialsException.class, AuthenticationException.class,
+        AuthenticationCredentialsNotFoundException.class})
     public ResponseEntity<ApiError> handleUnauthorized(Exception ex, HttpServletRequest request) {
         return build(HttpStatus.UNAUTHORIZED, "Invalid credentials", request.getRequestURI());
     }
@@ -65,7 +69,8 @@ public class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ApiError> handleMalformedJson(HttpMessageNotReadableException ex, HttpServletRequest request) {
+    public ResponseEntity<ApiError> handleMalformedJson(HttpMessageNotReadableException ex,
+                                                        HttpServletRequest request) {
         return build(HttpStatus.BAD_REQUEST, "Malformed request body", request.getRequestURI());
     }
 
@@ -76,14 +81,8 @@ public class GlobalExceptionHandler {
     }
 
     private ResponseEntity<ApiError> build(HttpStatus status, String message, String path) {
-        ApiError apiError = new ApiError(
-                LocalDateTime.now(),
-                status.value(),
-                status.getReasonPhrase(),
-            status.name(),
-                message,
-                path
-        );
+        ApiError apiError = new ApiError(LocalDateTime.now(), status.value(), status.getReasonPhrase(), status.name(),
+            message, path);
         return ResponseEntity.status(status).body(apiError);
     }
 }

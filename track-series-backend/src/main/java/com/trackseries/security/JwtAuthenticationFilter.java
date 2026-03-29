@@ -34,7 +34,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletRequest request,
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain
-            ) throws ServletException, IOException {
+    ) throws ServletException, IOException {
 
         // check if the request header contains "Authorization"
         final String authHeader = request.getHeader("Authorization");
@@ -44,11 +44,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // If there's no header or it doesn't start with "Bearer", it's not a JWT pass it down the chain
 
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
-            filterChain.doFilter(request,response);
+            filterChain.doFilter(request, response);
             return;
         }
 
-        // extract the token removin the Barer prefix
+        // Extract the token after the Bearer prefix.
         jwt = authHeader.substring(7);
 
         userName = jwtService.extractUsername(jwt);
@@ -66,13 +66,22 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
                 SecurityContextHolder.getContext().setAuthentication(authToken);
-                log.debug("JWT authentication set for user '{}' on {} {}", userName, request.getMethod(), request.getRequestURI());
+                log.debug(
+                        "JWT authentication set for user '{}' on {} {}",
+                        userName,
+                        request.getMethod(),
+                        request.getRequestURI()
+                );
             } else {
-                log.warn("Invalid JWT token for user '{}' on {} {}", userName, request.getMethod(), request.getRequestURI());
+                log.warn(
+                        "Invalid JWT token for user '{}' on {} {}",
+                        userName,
+                        request.getMethod(),
+                        request.getRequestURI()
+                );
             }
         }
 
         filterChain.doFilter(request, response);
-
     }
 }

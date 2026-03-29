@@ -36,26 +36,23 @@ export default function Stats() {
 
   useEffect(() => {
     fetchMonthlyStats(year);
-  }, []);
+  }, [year]);
 
   const maxCount = useMemo(() => Math.max(...monthlyCounts, 1), [monthlyCounts]);
 
   const handlePreviousYear = () => {
     const nextYear = year - 1;
     setYear(nextYear);
-    fetchMonthlyStats(nextYear);
   };
 
   const handleNextYear = () => {
     const nextYear = year + 1;
     setYear(nextYear);
-    fetchMonthlyStats(nextYear);
   };
 
   const handleYearChange = (event) => {
     const nextYear = Number(event.target.value);
     setYear(nextYear);
-    fetchMonthlyStats(nextYear);
   };
 
   const yearOptions = availableYears.length > 0 ? availableYears : [year];

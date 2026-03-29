@@ -6,7 +6,7 @@ import Search from './pages/Search';
 import Profile from './pages/Profile';
 import SeriesDetails from './pages/SeriesDetails';
 import Stats from './pages/Stats';
-import { useAuth } from './context/AuthContext';
+import { useAuth } from './context/useAuth';
 
 function App() {
   const { isAuthenticated } = useAuth();

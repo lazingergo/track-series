@@ -45,7 +45,11 @@ public class SeriesController {
             @PathVariable Long tvMazeId,
             Authentication authentication
     ) {
-        log.debug("/api/series/add-to-collection called, username='{}', tvMazeId={}", authentication.getName(), tvMazeId);
+        log.debug(
+            "/api/series/add-to-collection called, username='{}', tvMazeId={}",
+            authentication.getName(),
+            tvMazeId
+        );
         Series series = trackedSeriesService.addSeriesToCollectionForUsername(authentication.getName(), tvMazeId);
         return ResponseEntity.status(HttpStatus.CREATED).body(series);
     }
@@ -87,7 +91,10 @@ public class SeriesController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<SeriesSearchResultDto>> searchSeries(@RequestParam String q, Authentication authentication) {
+    public ResponseEntity<List<SeriesSearchResultDto>> searchSeries(
+            @RequestParam String q,
+            Authentication authentication
+    ) {
         log.debug("/api/series/search called, query='{}'", q);
         return ResponseEntity.ok(tvMazeService.searchShows(q, authentication.getName()));
     }

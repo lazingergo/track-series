@@ -9,6 +9,7 @@ import com.trackseries.repository.WatchedEpisodeRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,7 +41,11 @@ public class StatsService {
         LocalDateTime from = LocalDateTime.of(year, 1, 1, 0, 0);
         LocalDateTime to = from.plusYears(1);
 
-        List<WatchedEpisode> watchedInYear = watchedEpisodeRepository.findByUserIdAndWatchedAtBetween(user.getId(), from, to);
+        List<WatchedEpisode> watchedInYear = watchedEpisodeRepository.findByUserIdAndWatchedAtBetween(
+            user.getId(),
+            from,
+            to
+        );
 
         List<Integer> monthlyCounts = new ArrayList<>(Collections.nCopies(12, 0));
         for (WatchedEpisode watchedEpisode : watchedInYear) {
@@ -53,7 +58,12 @@ public class StatsService {
         dto.setMonthlyCounts(monthlyCounts);
         dto.setAvailableYears(availableYears);
 
-        log.debug("Monthly stats generated, username='{}', year={}, totalWatchedInYear={}", username, year, watchedInYear.size());
+        log.debug(
+            "Monthly stats generated, username='{}', year={}, totalWatchedInYear={}",
+            username,
+            year,
+            watchedInYear.size()
+        );
         return dto;
     }
 }

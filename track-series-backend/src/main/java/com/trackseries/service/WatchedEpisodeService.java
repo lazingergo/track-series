@@ -40,9 +40,18 @@ public class WatchedEpisodeService {
     }
 
     @Transactional
-    public void markEpisodeAsWatchedForUsername(String username, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
+    public void markEpisodeAsWatchedForUsername(
+            String username,
+            Long episodeId,
+            boolean includePrevious,
+            LocalDateTime customDate
+    ) {
         log.debug("Mark watched by username='{}', episodeId={}, includePrevious={}, customDate={}",
-            username, episodeId, includePrevious, customDate);
+                username,
+                episodeId,
+                includePrevious,
+                customDate
+        );
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
         markEpisodeAsWatched(user.getId(), episodeId, includePrevious, customDate);
@@ -50,7 +59,12 @@ public class WatchedEpisodeService {
 
     @Transactional
     public void markEpisodeAsWatched(Long userId, Long episodeId, boolean includePrevious, LocalDateTime customDate) {
-        log.debug("Mark watched called, userId={}, episodeId={}, includePrevious={}", userId, episodeId, includePrevious);
+        log.debug(
+            "Mark watched called, userId={}, episodeId={}, includePrevious={}",
+            userId,
+            episodeId,
+            includePrevious
+        );
         User user = userRepository.findById(userId)
             .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this id " + userId));
         Episode currentEpisode = episodeRepository.findById(episodeId)
@@ -93,11 +107,21 @@ public class WatchedEpisodeService {
                     watchedEpisodeRepository.saveAll(toSave);
                 }
             }
-            log.info("Marked episode with previous episodes, userId={}, episodeId={}, seriesId={}", userId, episodeId, seriesId);
+            log.info(
+                    "Marked episode with previous episodes, userId={}, episodeId={}, seriesId={}",
+                    userId,
+                    episodeId,
+                    seriesId
+            );
         } else {
             // just save the marked episode
             saveWatchedIfNotExists(user, currentEpisode, dateToSave);
-            log.info("Marked single episode as watched, userId={}, episodeId={}, seriesId={}", userId, episodeId, seriesId);
+            log.info(
+                    "Marked single episode as watched, userId={}, episodeId={}, seriesId={}",
+                    userId,
+                    episodeId,
+                    seriesId
+            );
         }
 
         updateSeriesStatus(userId, seriesId);

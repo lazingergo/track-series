@@ -16,32 +16,30 @@ import org.springframework.stereotype.Service;
 
 @Service
 public class AuthenticationService {
-        private static final Logger log = LoggerFactory.getLogger(AuthenticationService.class);
+    private static final Logger log = LoggerFactory.getLogger(AuthenticationService.class);
 
     private final UserRepository repository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-        public AuthenticationService(UserRepository repository,
-                                                                 PasswordEncoder passwordEncoder,
-                                                                 JwtService jwtService,
-                                                                 AuthenticationManager authenticationManager) {
+    public AuthenticationService(UserRepository repository, PasswordEncoder passwordEncoder, JwtService jwtService,
+                                 AuthenticationManager authenticationManager) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
     }
 
-        public AuthenticationResponse register(RegisterRequest request) {
-                log.info("Register request received for username='{}'", request.getUsername());
+    public AuthenticationResponse register(RegisterRequest request) {
+        log.info("Register request received for username='{}'", request.getUsername());
 
-                if (repository.existsByUsername(request.getUsername())) {
-                        throw new ConflictException("Username is already taken");
-                }
-                if (repository.existsByEmail(request.getEmail())) {
-                        throw new ConflictException("Email is already in use");
-                }
+        if (repository.existsByUsername(request.getUsername())) {
+            throw new ConflictException("Username is already taken");
+        }
+        if (repository.existsByEmail(request.getEmail())) {
+            throw new ConflictException("Email is already in use");
+        }
 
         // Create new user and encode the password before saving to the database
         User user = new User();
@@ -55,30 +53,22 @@ public class AuthenticationService {
         String jwtToken = jwtService.generateToken(user);
         log.info("User registered successfully, username='{}'", request.getUsername());
 
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .build();
+        return AuthenticationResponse.builder().token(jwtToken).build();
     }
 
-        public AuthenticationResponse authenticate(AuthenticationRequest request) {
+    public AuthenticationResponse authenticate(AuthenticationRequest request) {
         log.info("Login request received for username='{}'", request.getUsername());
         // Spring Security will authenticate the user, throwing an exception if credentials are bad
         authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(
-                        request.getUsername(),
-                        request.getPassword()
-                )
-        );
+            new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
 
         // If we reach this line, the user is authenticated. Let's fetch the user and generate a token
         User user = repository.findByUsername(request.getUsername())
-                .orElseThrow(() -> new ResourceNotFoundException("User not found with username " + request.getUsername()));
+            .orElseThrow(() -> new ResourceNotFoundException("User not found with username " + request.getUsername()));
 
         String jwtToken = jwtService.generateToken(user);
         log.info("User authenticated successfully, username='{}'", request.getUsername());
 
-        return AuthenticationResponse.builder()
-                .token(jwtToken)
-                .build();
+        return AuthenticationResponse.builder().token(jwtToken).build();
     }
 }

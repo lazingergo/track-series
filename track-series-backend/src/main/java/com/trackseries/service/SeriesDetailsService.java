@@ -46,7 +46,11 @@ public class SeriesDetailsService {
     public SeriesDetailsDto getDetailsForUsername(String username, Long seriesId) {
         log.debug("Series details requested, username='{}', seriesId={}", username, seriesId);
         User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
+                .orElseThrow(
+                        () -> new ResourceNotFoundException(
+                                "User cannot find with this username " + username
+                        )
+                );
         return getDetailsForUser(user.getId(), seriesId);
     }
 
@@ -87,7 +91,12 @@ public class SeriesDetailsService {
         }).collect(Collectors.toList());
 
         dto.setEpisodes(episodeItems);
-        log.debug("Series details generated, userId={}, seriesId={}, episodes={}", userId, seriesId, episodeItems.size());
+        log.debug(
+            "Series details generated, userId={}, seriesId={}, episodes={}",
+            userId,
+            seriesId,
+            episodeItems.size()
+        );
 
         return dto;
     }

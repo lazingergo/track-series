@@ -89,7 +89,10 @@ public class TrackedSeriesService {
                     return savedSeries;
                 });
 
-        Optional<TrackedSeries> existing = trackedSeriesRepository.findByUserIdAndSeriesId(user.getId(), series.getId());
+        Optional<TrackedSeries> existing = trackedSeriesRepository.findByUserIdAndSeriesId(
+            user.getId(),
+            series.getId()
+        );
         if (existing.isPresent()) {
             throw new ConflictException("Series already added to collection");
         }
@@ -132,7 +135,11 @@ public class TrackedSeriesService {
         }
 
         TrackedSeries tracked = trackedSeriesRepository.findByUserIdAndSeriesId(userId, seriesId)
-                .orElseThrow(() -> new ResourceNotFoundException("Series not found in user collection. Please add it first."));
+            .orElseThrow(
+                () -> new ResourceNotFoundException(
+                    "Series not found in user collection. Please add it first."
+                )
+            );
 
         tracked.setRating(rating);
         TrackedSeries saved = trackedSeriesRepository.save(tracked);
@@ -143,7 +150,11 @@ public class TrackedSeriesService {
     @Transactional
     public TrackedSeries updateSeriesRatingForUsername(String username, Long seriesId, Integer rating) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
+            .orElseThrow(
+                () -> new ResourceNotFoundException(
+                    "User cannot find with this username " + username
+                )
+            );
         return updateRating(user.getId(), seriesId, rating);
     }
 
