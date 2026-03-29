@@ -80,6 +80,7 @@ public class GlobalExceptionHandler {
                 LocalDateTime.now(),
                 status.value(),
                 status.getReasonPhrase(),
+            status.name(),
                 message,
                 path
         );

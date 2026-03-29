@@ -1,9 +1,11 @@
 package com.trackseries.controller;
 
+import com.trackseries.dto.UpdateSeriesStatusRequest;
 import com.trackseries.dto.UpNextDto;
 import com.trackseries.entity.TrackedSeries;
 import com.trackseries.enums.WatchStatus;
 import com.trackseries.exception.ResourceNotFoundException;
+import jakarta.validation.Valid;
 import com.trackseries.service.TrackedSeriesService;
 import com.trackseries.service.UpNextService;
 import org.slf4j.Logger;
@@ -48,6 +50,24 @@ public class UserCollectionController {
         } catch (ResourceNotFoundException ex) {
             trackedSeriesService.addSeriesToCollectionForUsername(username, seriesId, status);
             TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(username, seriesId, status);
+            return ResponseEntity.ok(result);
+        }
+    }
+
+    @PatchMapping("/{seriesId}/status")
+    public ResponseEntity<TrackedSeries> updateSeriesStatus(
+            @PathVariable Long seriesId,
+            @Valid @RequestBody UpdateSeriesStatusRequest request,
+            Authentication authentication) {
+        String username = authentication.getName();
+        log.debug("/api/collection/{}/status PATCH called, username='{}', status={}", seriesId, username, request.getStatus());
+
+        try {
+            TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(username, seriesId, request.getStatus());
+            return ResponseEntity.ok(result);
+        } catch (ResourceNotFoundException ex) {
+            trackedSeriesService.addSeriesToCollectionForUsername(username, seriesId, request.getStatus());
+            TrackedSeries result = trackedSeriesService.updateSeriesStatusForUsername(username, seriesId, request.getStatus());
             return ResponseEntity.ok(result);
         }
     }
