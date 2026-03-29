@@ -4,6 +4,7 @@ import com.trackseries.dto.AuthenticationRequest;
 import com.trackseries.dto.AuthenticationResponse;
 import com.trackseries.dto.RegisterRequest;
 import com.trackseries.entity.User;
+import com.trackseries.exception.ConflictException;
 import com.trackseries.exception.ResourceNotFoundException;
 import com.trackseries.repository.UserRepository;
 import org.slf4j.Logger;
@@ -34,6 +35,14 @@ public class AuthenticationService {
 
     public AuthenticationResponse register(RegisterRequest request) {
                 log.info("Register request received for username='{}'", request.getUsername());
+
+                if (repository.existsByUsername(request.getUsername())) {
+                        throw new ConflictException("Username is already taken");
+                }
+                if (repository.existsByEmail(request.getEmail())) {
+                        throw new ConflictException("Email is already in use");
+                }
+
         // Create new user and encode the password before saving to the database
         User user = new User();
         user.setUsername(request.getUsername());
