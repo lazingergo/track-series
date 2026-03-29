@@ -14,6 +14,7 @@ import com.trackseries.repository.WatchedEpisodeRepository;
 import jakarta.transaction.Transactional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
@@ -57,9 +58,13 @@ public class TrackedSeriesService {
         tracked.setSeries(series);
         tracked.setStatus(status);
 
-        TrackedSeries saved = trackedSeriesRepository.save(tracked);
-        log.info("Collection updated, userId={}, seriesId={}, status={}", userId, seriesId, status);
-        return saved;
+        try {
+            TrackedSeries saved = trackedSeriesRepository.save(tracked);
+            log.info("Collection updated, userId={}, seriesId={}, status={}", userId, seriesId, status);
+            return saved;
+        } catch (DataIntegrityViolationException ex) {
+            throw new ConflictException("Series already added to collection");
+        }
     }
 
     @Transactional
@@ -93,7 +98,11 @@ public class TrackedSeriesService {
         tracked.setUser(user);
         tracked.setSeries(series);
         tracked.setStatus(status);
-        trackedSeriesRepository.save(tracked);
+        try {
+            trackedSeriesRepository.save(tracked);
+        } catch (DataIntegrityViolationException ex) {
+            throw new ConflictException("Series already added to collection");
+        }
 
         log.info("Collection added, userId={}, seriesId={}, status={}", user.getId(), series.getId(), status);
         return series;
