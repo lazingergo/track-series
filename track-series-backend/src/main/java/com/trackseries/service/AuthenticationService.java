@@ -23,17 +23,17 @@ public class AuthenticationService {
     private final JwtService jwtService;
     private final AuthenticationManager authenticationManager;
 
-    public AuthenticationService(UserRepository repository,
-                                 PasswordEncoder passwordEncoder,
-                                 JwtService jwtService,
-                                 AuthenticationManager authenticationManager) {
+        public AuthenticationService(UserRepository repository,
+                                                                 PasswordEncoder passwordEncoder,
+                                                                 JwtService jwtService,
+                                                                 AuthenticationManager authenticationManager) {
         this.repository = repository;
         this.passwordEncoder = passwordEncoder;
         this.jwtService = jwtService;
         this.authenticationManager = authenticationManager;
     }
 
-    public AuthenticationResponse register(RegisterRequest request) {
+        public AuthenticationResponse register(RegisterRequest request) {
                 log.info("Register request received for username='{}'", request.getUsername());
 
                 if (repository.existsByUsername(request.getUsername())) {
@@ -60,7 +60,7 @@ public class AuthenticationService {
                 .build();
     }
 
-    public AuthenticationResponse authenticate(AuthenticationRequest request) {
+        public AuthenticationResponse authenticate(AuthenticationRequest request) {
         log.info("Login request received for username='{}'", request.getUsername());
         // Spring Security will authenticate the user, throwing an exception if credentials are bad
         authenticationManager.authenticate(

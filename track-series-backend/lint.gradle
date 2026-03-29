@@ -14,6 +14,7 @@ buildscript {
 
 apply plugin: 'checkstyle'
 apply plugin: 'pmd'
+apply plugin: 'jacoco'
 apply plugin: com.github.spotbugs.snom.SpotBugsPlugin
 apply plugin: se.bjurr.violations.gradle.plugin.ViolationsGradlePlugin
 
@@ -67,3 +68,50 @@ task violations(type: se.bjurr.violations.gradle.plugin.ViolationsTask) {
 }
 
 check.finalizedBy violations
+
+// JaCoCo Configuration
+jacoco {
+    toolVersion = "0.8.11"
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
+    
+    afterEvaluate {
+        classDirectories.setFrom(files(classDirectories.files.collect {
+            fileTree(dir: it, exclude: [
+                'com/trackseries/config/**',
+                'com/trackseries/dto/**',
+                'com/trackseries/entity/**',
+                'com/trackseries/enums/**',
+                '**/TrackSeriesBackendApplication.class'
+            ])
+        }))
+    }
+}
+
+test.finalizedBy jacocoTestReport
+
+// Quality Gate Task
+task qualityCheck {
+    description = 'Run all code quality checks: checkstyle, pmd, spotbugs, test, and coverage report'
+    dependsOn checkstyleMain, pmdMain, spotbugsMain, test, jacocoTestReport, violations
+}
+
+task jacocoReportHtml {
+    description = 'Open JaCoCo HTML report'
+    doLast {
+        def reportFile = file("${buildDir}/reports/jacoco/test/html/index.html")
+        if (reportFile.exists()) {
+            println "JaCoCo report available at: file://${reportFile.absolutePath}"
+            println "Coverage report generated in: ${buildDir}/reports/jacoco/test/html/"
+        } else {
+            println "Report not found. Run 'gradlew qualityCheck' first."
+        }
+    }
+}

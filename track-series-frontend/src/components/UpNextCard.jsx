@@ -24,19 +24,19 @@ export default function UpNextCard({ item, onMarkWatched, onOpenSeries }) {
             {item.seriesTitle}
           </h3>
           <p className="text-sm text-tvprimary font-medium mt-1 truncate">
-            {formatEpisode(item.seasonNumber, item.episodeNumber)} <span className="text-gray-400 font-normal">- {item.episodeTitle}</span>
+            {formatEpisode(item.seasonNumber, item.episodeNumber)}{' '}
+            <span className="text-gray-400 font-normal">- {item.episodeTitle}</span>
           </p>
         </div>
       </button>
 
-      <button 
+      <button
         onClick={() => onMarkWatched(item.episodeId)}
         className="p-5 text-gray-500 hover:text-green-500 transition-colors cursor-pointer"
         title="Mark as watched"
       >
         <CheckCircle size={30} />
       </button>
-
     </div>
   );
 }
