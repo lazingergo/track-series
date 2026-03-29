@@ -19,9 +19,8 @@ export default function Stats() {
       });
 
       const data = response.data || {};
-      const normalizedCounts = Array.isArray(data.monthlyCounts) && data.monthlyCounts.length === 12
-        ? data.monthlyCounts
-        : Array(12).fill(0);
+      const normalizedCounts =
+        Array.isArray(data.monthlyCounts) && data.monthlyCounts.length === 12 ? data.monthlyCounts : Array(12).fill(0);
 
       setYear(data.year || targetYear);
       setMonthlyCounts(normalizedCounts);
@@ -59,9 +58,7 @@ export default function Stats() {
     fetchMonthlyStats(nextYear);
   };
 
-  const yearOptions = availableYears.length > 0
-    ? availableYears
-    : [year];
+  const yearOptions = availableYears.length > 0 ? availableYears : [year];
 
   return (
     <div className="max-w-6xl mx-auto flex flex-col gap-6">
@@ -86,7 +83,9 @@ export default function Stats() {
             className="bg-[#1e1e1e] border border-gray-700 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-tvprimary"
           >
             {yearOptions.map((item) => (
-              <option key={item} value={item}>{item}</option>
+              <option key={item} value={item}>
+                {item}
+              </option>
             ))}
           </select>
 
