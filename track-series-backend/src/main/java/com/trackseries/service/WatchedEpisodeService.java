@@ -14,8 +14,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class WatchedEpisodeService {
@@ -61,12 +64,33 @@ public class WatchedEpisodeService {
                     then it is possible to treat it as if we had automatically seen the
             */
 
-            // get all episode
-            List<Episode> allEpisodes = episodeRepository.findBySeriesId(seriesId);
+            List<Long> candidateEpisodeIds = episodeRepository.findEpisodeIdsUpTo(
+                    seriesId,
+                    currentEpisode.getSeasonNumber(),
+                    currentEpisode.getEpisodeNumber()
+            );
 
-            for (Episode ep : allEpisodes) {
-                if (ep.getSeasonNumber() > 0 && isBeforeOrEqual(ep, currentEpisode)){
-                    saveWatchedIfNotExists(user, ep, dateToSave);
+            if (!candidateEpisodeIds.isEmpty()) {
+                List<Long> existingIds = watchedEpisodeRepository.findExistingEpisodeIds(userId, candidateEpisodeIds);
+                Set<Long> existingIdSet = new HashSet<>(existingIds);
+
+                List<WatchedEpisode> toSave = new ArrayList<>();
+                for (Long candidateEpisodeId : candidateEpisodeIds) {
+                    if (existingIdSet.contains(candidateEpisodeId)) {
+                        continue;
+                    }
+
+                    Episode episodeRef = episodeRepository.getReferenceById(candidateEpisodeId);
+
+                    WatchedEpisode watched = new WatchedEpisode();
+                    watched.setUser(user);
+                    watched.setEpisode(episodeRef);
+                    watched.setWatchedAt(dateToSave);
+                    toSave.add(watched);
+                }
+
+                if (!toSave.isEmpty()) {
+                    watchedEpisodeRepository.saveAll(toSave);
                 }
             }
             log.info("Marked episode with previous episodes, userId={}, episodeId={}, seriesId={}", userId, episodeId, seriesId);
@@ -108,14 +132,6 @@ public class WatchedEpisodeService {
             watched.setWatchedAt(watchedAt);
             watchedEpisodeRepository.save(watched);
         }
-    }
-
-    private boolean isBeforeOrEqual(Episode ep, Episode target) {
-        if (ep.getSeasonNumber() < target.getSeasonNumber()) {
-            return true;
-        }
-        return ep.getSeasonNumber().equals(target.getSeasonNumber())
-                && ep.getEpisodeNumber() <= target.getEpisodeNumber();
     }
 
     private void updateSeriesStatus(Long userId, Long seriesId) {

@@ -10,6 +10,9 @@ import com.trackseries.service.TrackedSeriesService;
 import com.trackseries.service.TvMazeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -52,6 +55,17 @@ public class SeriesController {
     public ResponseEntity<List<Series>> getAllSeries() {
         List<Series> seriesList = seriesRepository.findAll();
         return ResponseEntity.ok(seriesList);
+    }
+
+    // Get series with pagination for large datasets
+    @GetMapping("/paged")
+    public ResponseEntity<Page<Series>> getSeriesPaged(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size
+    ) {
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        Pageable pageable = PageRequest.of(Math.max(page, 0), safeSize);
+        return ResponseEntity.ok(seriesRepository.findAll(pageable));
     }
 
     // Get series by ID

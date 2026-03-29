@@ -23,4 +23,20 @@ public interface EpisodeRepository extends JpaRepository<Episode, Long> {
         """)
     List<Episode> findNextEpisodes(Long seriesId, Integer seasonNumber);
 
+        @Query("""
+                SELECT e FROM Episode e
+                WHERE e.series.id IN :seriesIds
+                    AND e.seasonNumber > :seasonNumber
+                ORDER BY e.series.id ASC, e.seasonNumber ASC, e.episodeNumber ASC
+                """)
+        List<Episode> findNextEpisodesForSeriesIds(List<Long> seriesIds, Integer seasonNumber);
+
+        @Query("""
+                SELECT e.id FROM Episode e
+                WHERE e.series.id = :seriesId
+                    AND e.seasonNumber > 0
+                    AND (e.seasonNumber < :seasonNumber OR (e.seasonNumber = :seasonNumber AND e.episodeNumber <= :episodeNumber))
+                """)
+        List<Long> findEpisodeIdsUpTo(Long seriesId, Integer seasonNumber, Integer episodeNumber);
+
 }
