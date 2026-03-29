@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { Tv } from 'lucide-react';
 import api from '../api/client';
 import { useAuth } from '../context/AuthContext';
