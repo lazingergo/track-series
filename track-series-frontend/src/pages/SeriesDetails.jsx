@@ -12,6 +12,7 @@ export default function SeriesDetails() {
   const [loading, setLoading] = useState(true);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [deletingSeries, setDeletingSeries] = useState(false);
+  const [refreshingSeries, setRefreshingSeries] = useState(false);
   const [error, setError] = useState('');
   const [watchDialogOpen, setWatchDialogOpen] = useState(false);
   const [selectedEpisode, setSelectedEpisode] = useState(null);
@@ -116,6 +117,24 @@ export default function SeriesDetails() {
     }
   };
 
+  const handleRefreshSeries = async () => {
+    if (!details?.userStatus || refreshingSeries) {
+      return;
+    }
+
+    try {
+      setRefreshingSeries(true);
+      setError('');
+      await api.post(`/collection/${seriesId}/refresh`);
+      fetchDetails();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to refresh series episodes.');
+    } finally {
+      setRefreshingSeries(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-center text-gray-500 mt-10 animate-pulse">Loading series...</div>;
   }
@@ -151,6 +170,16 @@ export default function SeriesDetails() {
                     : details.userStatus === 'WATCHING'
                       ? 'Stop Watching'
                       : 'Continue Watching'}
+                </button>
+              )}
+              {showDeleteButton && (
+                <button
+                  type="button"
+                  onClick={handleRefreshSeries}
+                  disabled={refreshingSeries || deletingSeries || statusUpdating}
+                  className="shrink-0 px-3 py-2 rounded-lg bg-tvprimary hover:bg-yellow-400 text-black text-sm font-semibold transition disabled:opacity-50"
+                >
+                  {refreshingSeries ? 'Refreshing...' : 'Refresh Episodes'}
                 </button>
               )}
               {showDeleteButton && (

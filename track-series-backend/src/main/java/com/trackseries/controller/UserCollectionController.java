@@ -14,6 +14,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/collection")
 public class UserCollectionController {
@@ -106,6 +108,26 @@ public class UserCollectionController {
         log.debug("/api/collection/{}/rate called, username='{}', value={}", seriesId, username, value);
 
         TrackedSeries result = trackedSeriesService.updateSeriesRatingForUsername(username, seriesId, value);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/{seriesId}/refresh")
+    public ResponseEntity<TrackedSeries> refreshSeries(
+            @PathVariable Long seriesId,
+            Authentication authentication) {
+        String username = authentication.getName();
+        log.debug("/api/collection/{}/refresh POST called, username='{}'", seriesId, username);
+
+        TrackedSeries result = trackedSeriesService.refreshTrackedSeriesForUsername(username, seriesId);
+        return ResponseEntity.ok(result);
+    }
+
+    @PostMapping("/refresh-ongoing")
+    public ResponseEntity<List<TrackedSeries>> refreshOngoingSeries(Authentication authentication) {
+        String username = authentication.getName();
+        log.debug("/api/collection/refresh-ongoing POST called, username='{}'", username);
+
+        List<TrackedSeries> result = trackedSeriesService.refreshOngoingTrackedSeriesForUsername(username);
         return ResponseEntity.ok(result);
     }
 

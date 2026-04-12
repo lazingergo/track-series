@@ -4,6 +4,7 @@ import com.trackseries.dto.SeriesSearchResultDto;
 import com.trackseries.dto.TvMazeSeriesDto;
 import com.trackseries.entity.*;
 import com.trackseries.exception.ResourceNotFoundException;
+import com.trackseries.repository.EpisodeRepository;
 import com.trackseries.repository.GenreRepository;
 import com.trackseries.repository.SeriesRepository;
 import com.trackseries.repository.TrackedSeriesRepository;
@@ -18,6 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.JsonNode;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -27,6 +29,7 @@ public class TvMazeService {
     private static final Logger log = LoggerFactory.getLogger(TvMazeService.class);
 
     private final SeriesRepository seriesRepository;
+    private final EpisodeRepository episodeRepository;
     private final GenreRepository genreRepository;
     private final RestClient restClient;
     private final RestTemplate restTemplate;
@@ -34,12 +37,14 @@ public class TvMazeService {
     private final TrackedSeriesRepository trackedSeriesRepository;
 
     public TvMazeService(SeriesRepository seriesRepository,
+                         EpisodeRepository episodeRepository,
                          GenreRepository genreRepository,
                          @Value("${tvmaze.api.base-url}") String baseUrl,
                          UserRepository userRepository,
                          TrackedSeriesRepository trackedSeriesRepository) {
 
         this.seriesRepository = seriesRepository;
+        this.episodeRepository = episodeRepository;
         this.genreRepository = genreRepository;
         this.restClient = RestClient.create(baseUrl);
         this.restTemplate = new RestTemplate();
@@ -124,6 +129,63 @@ public class TvMazeService {
         );
         return saved;
 
+    }
+
+    @Transactional
+    public int refreshSeriesEpisodes(Long tvMazeId) {
+        Series series = seriesRepository.findById(tvMazeId)
+            .orElseThrow(() -> new ResourceNotFoundException("Series not found with id " + tvMazeId));
+
+        TvMazeSeriesDto dto = restClient.get()
+            .uri("/shows/{id}?embed=episodes", tvMazeId)
+            .retrieve()
+            .body(TvMazeSeriesDto.class);
+
+        if (dto == null) {
+            throw new ResourceNotFoundException("No series found with id " + tvMazeId);
+        }
+
+        series.setTitle(dto.getName());
+        series.setSummary(dto.getSummary());
+        series.setStatus(dto.getStatus());
+        series.setPremiered(dto.getPremiered());
+        series.setEnded(dto.getEnded());
+
+        if (dto.getImage() != null) {
+            series.setImageUrl(
+                dto.getImage().getOriginal() != null
+                    ? dto.getImage().getOriginal()
+                    : dto.getImage().getMedium()
+            );
+        }
+
+        Set<Long> existingEpisodeIds = series.getEpisodes().stream()
+            .map(Episode::getId)
+            .collect(Collectors.toCollection(HashSet::new));
+
+        int addedEpisodes = 0;
+        if (dto.getEmbedded() != null && dto.getEmbedded().getEpisodes() != null) {
+            for (var epDto : dto.getEmbedded().getEpisodes()) {
+                if (existingEpisodeIds.contains(epDto.getId()) || episodeRepository.existsById(epDto.getId())) {
+                    continue;
+                }
+
+                Episode episode = new Episode();
+                episode.setId(epDto.getId());
+                episode.setTitle(epDto.getName());
+                episode.setSeasonNumber(epDto.getSeason());
+                episode.setEpisodeNumber(epDto.getNumber());
+                episode.setAirdate(epDto.getAirdate());
+                episode.setSummary(epDto.getSummary());
+                episode.setSeries(series);
+                series.getEpisodes().add(episode);
+                addedEpisodes++;
+            }
+        }
+
+        seriesRepository.save(series);
+        log.info("Series refreshed, tvMazeId={}, addedEpisodes={}", tvMazeId, addedEpisodes);
+        return addedEpisodes;
     }
 
     public List<SeriesSearchResultDto> searchShows(String query, String username) {
