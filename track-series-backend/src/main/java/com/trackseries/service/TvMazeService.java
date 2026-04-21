@@ -19,10 +19,7 @@ import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.JsonNode;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -160,33 +157,74 @@ public class TvMazeService {
             );
         }
 
-        Set<Long> existingEpisodeIds = series.getEpisodes().stream()
-            .map(Episode::getId)
-            .collect(Collectors.toCollection(HashSet::new));
+        Map<Long, Episode> existingEpisodeIds = series.getEpisodes().stream()
+            .collect(Collectors.toMap(Episode::getId, ep -> ep));
 
         int addedEpisodes = 0;
+        int updatedEpisodes = 0;
         if (dto.getEmbedded() != null && dto.getEmbedded().getEpisodes() != null) {
             for (var epDto : dto.getEmbedded().getEpisodes()) {
-                if (existingEpisodeIds.contains(epDto.getId()) || episodeRepository.existsById(epDto.getId())) {
-                    continue;
+                Episode episode = existingEpisodeIds.get(epDto.getId());
+
+                if(episode == null) {
+                    // maybe exists in the database
+
+                    episode = episodeRepository.findById(epDto.getId()).orElse(null);
+
+                    if (episode == null) {
+                        episode = new Episode();
+                        episode.setId(epDto.getId());
+                        episode.setSeries(series);
+                        series.getEpisodes().add(episode);
+                        addedEpisodes++;
+                    } else {
+
+                    }
                 }
 
-                Episode episode = new Episode();
-                episode.setId(epDto.getId());
-                episode.setTitle(epDto.getName());
-                episode.setSeasonNumber(epDto.getSeason());
-                episode.setEpisodeNumber(epDto.getNumber());
-                episode.setAirdate(epDto.getAirdate());
-                episode.setSummary(epDto.getSummary());
-                episode.setSeries(series);
-                episode.setWatchable(isWatchable(epDto.getAirdate()));
-                series.getEpisodes().add(episode);
-                addedEpisodes++;
+                boolean changed = false;
+
+                // tilte
+                if (!Objects.equals(episode.getTitle(),epDto.getName())) {
+                    episode.setTitle(epDto.getName());
+                    changed = true;
+                }
+                if (!Objects.equals(episode.getSeasonNumber(), epDto.getSeason())) {
+                    episode.setSeasonNumber(epDto.getSeason());
+                    changed = true;
+                }
+                if (!Objects.equals(episode.getEpisodeNumber(), epDto.getNumber())) {
+                    episode.setEpisodeNumber(epDto.getNumber());
+                    changed = true;
+                }
+                if (!Objects.equals(episode.getAirdate(), epDto.getAirdate())) {
+                    episode.setAirdate(epDto.getAirdate());
+                    changed = true;
+                }
+                if (!Objects.equals(episode.getSummary(), epDto.getSummary())) {
+                    episode.setSummary(epDto.getSummary());
+                    changed = true;
+                }
+
+                Boolean newWatchable = isWatchable(epDto.getAirdate());
+                if (!Objects.equals(episode.getWatchable(), newWatchable)) {
+                    episode.setWatchable(newWatchable);
+                    changed = true;
+                }
+
+                if (changed && addedEpisodes >= 0) {
+                    updatedEpisodes++;
+                }
             }
         }
 
         seriesRepository.save(series);
-        log.info("Series refreshed, tvMazeId={}, addedEpisodes={}", tvMazeId, addedEpisodes);
+        log.info(
+            "Series refreshed, tvMazeId={}, addedEpisodes={}, updatedEpisodes={}",
+            tvMazeId,
+            addedEpisodes,
+            updatedEpisodes
+        );
         return addedEpisodes;
     }
 
