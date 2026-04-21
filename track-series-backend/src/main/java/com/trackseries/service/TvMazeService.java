@@ -18,6 +18,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestTemplate;
 import tools.jackson.databind.JsonNode;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -113,7 +114,7 @@ public class TvMazeService {
                 episode.setEpisodeNumber(epDto.getNumber());
                 episode.setAirdate(epDto.getAirdate());
                 episode.setSummary(epDto.getSummary());
-
+                episode.setWatchable(isWatchable(epDto.getAirdate()));
                 // set the episode for the series, and the series for the episode.
                 episode.setSeries(series);
                 series.getEpisodes().add(episode);
@@ -178,6 +179,7 @@ public class TvMazeService {
                 episode.setAirdate(epDto.getAirdate());
                 episode.setSummary(epDto.getSummary());
                 episode.setSeries(series);
+                episode.setWatchable(isWatchable(epDto.getAirdate()));
                 series.getEpisodes().add(episode);
                 addedEpisodes++;
             }
@@ -186,6 +188,10 @@ public class TvMazeService {
         seriesRepository.save(series);
         log.info("Series refreshed, tvMazeId={}, addedEpisodes={}", tvMazeId, addedEpisodes);
         return addedEpisodes;
+    }
+
+    private boolean isWatchable(LocalDate airdate) {
+        return airdate != null && !airdate.isAfter(LocalDate.now());
     }
 
     public List<SeriesSearchResultDto> searchShows(String query, String username) {

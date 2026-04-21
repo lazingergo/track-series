@@ -34,6 +34,8 @@ public class Episode {
     @Column(columnDefinition = "TEXT")
     private String summary;
 
+    private Boolean watchable;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "series_id")
     @JsonIgnore

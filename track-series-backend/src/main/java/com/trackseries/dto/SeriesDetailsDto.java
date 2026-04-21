@@ -23,6 +23,7 @@ public class SeriesDetailsDto {
         private Integer seasonNumber;
         private Integer episodeNumber;
         private String title;
+        private boolean watchable;
         private boolean isWatched;
     }
 }

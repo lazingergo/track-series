@@ -37,6 +37,10 @@ export default function SeriesDetails() {
   }, [fetchDetails]);
 
   const handleToggleWatched = async (episode) => {
+    if (!episode.watchable && !episode.watched) {
+      return;
+    }
+
     try {
       if (episode.watched) {
         await api.delete(`/episodes/${episode.id}/watch`);
@@ -211,14 +215,22 @@ export default function SeriesDetails() {
             <button
               type="button"
               key={episode.id}
+              disabled={!episode.watchable && !episode.watched}
               onClick={() => handleToggleWatched(episode)}
-              className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-900 transition"
+              className={`w-full flex items-center justify-between px-5 py-3 transition ${
+                !episode.watchable && !episode.watched
+                  ? 'opacity-50 cursor-not-allowed bg-gray-950'
+                  : 'hover:bg-gray-900'
+              }`}
             >
               <div className="text-left">
                 <p className="text-sm text-tvprimary font-medium">
                   {formatEpisode(episode.seasonNumber, episode.episodeNumber)}
                 </p>
                 <p className="text-white text-sm">{episode.title}</p>
+                {!episode.watchable && !episode.watched && (
+                  <p className="text-xs text-gray-500 mt-1">Not released yet</p>
+                )}
               </div>
               <span className={`text-xs font-semibold ${episode.watched ? 'text-green-400' : 'text-gray-400'}`}>
                 {episode.watched ? 'WATCHED ✓' : 'NOT WATCHED'}

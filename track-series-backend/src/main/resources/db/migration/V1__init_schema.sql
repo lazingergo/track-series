@@ -25,6 +25,7 @@ CREATE TABLE IF NOT EXISTS episode (
     airdate DATE,
     summary TEXT,
     series_id BIGINT,
+    watchable TINYINT(1) NOT NULL DEFAULT 0,
     PRIMARY KEY (id),
     KEY idx_episode_series_id (series_id),
     CONSTRAINT fk_episode_series FOREIGN KEY (series_id) REFERENCES series(id) ON DELETE CASCADE
