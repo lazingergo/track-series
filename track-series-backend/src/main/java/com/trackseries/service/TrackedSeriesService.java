@@ -206,6 +206,22 @@ public class TrackedSeriesService {
         return refreshed;
     }
 
+    @Transactional
+    public List<Long> activeSeries(Long userId) {
+        return trackedSeriesRepository.findDistinctSeriesIdsByUserIdAndStatusIn(
+            userId,
+            List.of(WatchStatus.WATCHING, WatchStatus.PLAN_TO_WATCH)
+        );
+    }
+
+    @Transactional
+    public List<Long> activeSeriesForUsername(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
+
+        return activeSeries(user.getId());
+    }
+
     private boolean isSeriesOngoing(Series series) {
         if (series.getEnded() != null) {
             return false;
