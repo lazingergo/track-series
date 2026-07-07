@@ -175,7 +175,6 @@ public class TvMazeService {
                     if (episode == null) {
                         episode = new Episode();
                         episode.setId(epDto.getId());
-                        episode.setSeries(series);
                         series.getEpisodes().add(episode);
                         addedEpisodes++;
                     } else {
@@ -183,17 +182,9 @@ public class TvMazeService {
                     }
                 }
 
-                boolean needsRefresh = episode == null || shouldRefreshEpisode(episode, epDto);
-
-                if (needsRefresh) {
-                    episode.setTitle(epDto.getName());
-                    episode.setSeasonNumber(epDto.getSeason());
-                    episode.setEpisodeNumber(epDto.getNumber());
-                    episode.setAirdate(epDto.getAirdate());
-                    episode.setSummary(epDto.getSummary());
-                    episode.setWatchable(isWatchable(epDto.getAirdate()));
-                    updatedEpisodes++;
-                }
+                episode.setSeries(series);
+                applyEpisodeData(episode, epDto);
+                updatedEpisodes++;
             }
         }
 
@@ -211,25 +202,13 @@ public class TvMazeService {
         return airdate != null && !airdate.isAfter(LocalDate.now());
     }
 
-    private boolean shouldRefreshEpisode(Episode episode, TvMazeEpisodeDto epDto) {
-        if (episode == null) {
-            return true;
-        }
-
-        boolean placeholderEpisode = isPlaceholderEpisode(episode);
-        boolean changed = !Objects.equals(episode.getTitle(), epDto.getName())
-            || !Objects.equals(episode.getSeasonNumber(), epDto.getSeason())
-            || !Objects.equals(episode.getEpisodeNumber(), epDto.getNumber())
-            || !Objects.equals(episode.getAirdate(), epDto.getAirdate())
-            || !Objects.equals(episode.getSummary(), epDto.getSummary())
-            || !Objects.equals(episode.getWatchable(), isWatchable(epDto.getAirdate()));
-
-        return placeholderEpisode || changed;
-    }
-
-    private boolean isPlaceholderEpisode(Episode episode) {
-        String title = episode.getTitle();
-        return title == null || title.isBlank() || "TBA".equalsIgnoreCase(title.trim()) || episode.getAirdate() == null;
+    private void applyEpisodeData(Episode episode, TvMazeEpisodeDto epDto) {
+        episode.setTitle(epDto.getName());
+        episode.setSeasonNumber(epDto.getSeason());
+        episode.setEpisodeNumber(epDto.getNumber());
+        episode.setAirdate(epDto.getAirdate());
+        episode.setSummary(epDto.getSummary());
+        episode.setWatchable(isWatchable(epDto.getAirdate()));
     }
 
     public List<SeriesSearchResultDto> searchShows(String query, String username) {
