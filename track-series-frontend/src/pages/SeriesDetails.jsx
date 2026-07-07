@@ -37,12 +37,15 @@ export default function SeriesDetails() {
   }, [fetchDetails]);
 
   const handleToggleWatched = async (episode) => {
-    if (!episode.watchable && !episode.watched) {
+    const isWatched = Boolean(episode.watched ?? episode.isWatched);
+    const isWatchable = episode.watchable !== false;
+
+    if (!isWatchable && !isWatched) {
       return;
     }
 
     try {
-      if (episode.watched) {
+      if (isWatched) {
         await api.delete(`/episodes/${episode.id}/watch`);
       } else {
         setSelectedEpisode(episode);
@@ -215,10 +218,10 @@ export default function SeriesDetails() {
             <button
               type="button"
               key={episode.id}
-              disabled={!episode.watchable && !episode.watched}
+              disabled={!normalizeWatchable(episode) && !normalizeWatched(episode)}
               onClick={() => handleToggleWatched(episode)}
               className={`w-full flex items-center justify-between px-5 py-3 transition ${
-                !episode.watchable && !episode.watched
+                !normalizeWatchable(episode) && !normalizeWatched(episode)
                   ? 'opacity-50 cursor-not-allowed bg-gray-950'
                   : 'hover:bg-gray-900'
               }`}
@@ -228,12 +231,12 @@ export default function SeriesDetails() {
                   {formatEpisode(episode.seasonNumber, episode.episodeNumber)}
                 </p>
                 <p className="text-white text-sm">{episode.title}</p>
-                {!episode.watchable && !episode.watched && (
+                {!normalizeWatchable(episode) && !normalizeWatched(episode) && (
                   <p className="text-xs text-gray-500 mt-1">Not released yet</p>
                 )}
               </div>
-              <span className={`text-xs font-semibold ${episode.watched ? 'text-green-400' : 'text-gray-400'}`}>
-                {episode.watched ? 'WATCHED ✓' : 'NOT WATCHED'}
+              <span className={`text-xs font-semibold ${normalizeWatched(episode) ? 'text-green-400' : 'text-gray-400'}`}>
+                {normalizeWatched(episode) ? 'WATCHED ✓' : 'NOT WATCHED'}
               </span>
             </button>
           ))}

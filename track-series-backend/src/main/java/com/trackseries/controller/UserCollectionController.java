@@ -118,8 +118,8 @@ public class UserCollectionController {
         String username = authentication.getName();
         log.debug("/api/collection/{}/refresh POST called, username='{}'", seriesId, username);
 
-        TrackedSeries result = trackedSeriesService.refreshTrackedSeriesForUsername(username, seriesId);
-        return ResponseEntity.ok(result);
+        trackedSeriesService.refreshTrackedSeriesForUsername(username, seriesId);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/refresh-ongoing")
@@ -127,8 +127,8 @@ public class UserCollectionController {
         String username = authentication.getName();
         log.debug("/api/collection/refresh-ongoing POST called, username='{}'", username);
 
-        List<TrackedSeries> result = trackedSeriesService.refreshOngoingTrackedSeriesForUsername(username);
-        return ResponseEntity.ok(result);
+        trackedSeriesService.refreshOngoingTrackedSeriesForUsername(username);
+        return ResponseEntity.noContent().build();
     }
 
 }
