@@ -153,6 +153,9 @@ export default function SeriesDetails() {
   const showStatusToggle = details.userStatus === 'WATCHING' || details.userStatus === 'DROPPED';
   const showDeleteButton = Boolean(details.userStatus);
 
+  const normalizeWatched = (episode) => Boolean(episode.watched ?? episode.isWatched);
+  const normalizeWatchable = (episode) => episode.watchable !== false;
+
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div className="bg-tvcard p-6 rounded-2xl border border-gray-800 shadow-lg flex gap-4">
