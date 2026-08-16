@@ -1,7 +1,10 @@
-# rename this file to: "application-local.properties"
+# Optional develop profile template.
+# Copy values into application-develop.properties if you need machine-specific overrides.
 
-db.host=
-db.port=
-db.name=series_tracker
-db.username=
-db.password=
+# Example local database override:
+# spring.datasource.url=jdbc:mysql://localhost:3306/track_series?serverTimezone=UTC
+# spring.datasource.username=root
+# spring.datasource.password=your-local-password
+
+# Example local JWT override:
+# application.security.jwt.secret-key=dev-secret-key-change-me
