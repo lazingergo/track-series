@@ -62,16 +62,22 @@ services:
       DB_PORT: 3306
       DB_NAME: ${DB_NAME:-track_series}
       DB_USERNAME: root
-      DB_PASSWORD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD is required}
+      MYSQL_PWD: ${DB_ROOT_PASSWORD:?DB_ROOT_PASSWORD is required}
       BACKUP_INTERVAL_SECONDS: ${BACKUP_INTERVAL_SECONDS:-86400}
     volumes:
       - ${BACKUP_DIR:-./backups}:/backups
     command: >
       sh -c '
       mkdir -p /backups &&
+      sleep 60 &&
       while true; do
         timestamp=$$(date +%Y%m%d-%H%M%S);
-        mysqldump -h $$DB_HOST -P $$DB_PORT -u$$DB_USERNAME -p$$DB_PASSWORD $$DB_NAME > /backups/trackseries-$$timestamp.sql;
+        if mysqldump -h "$$DB_HOST" -P "$$DB_PORT" -u"$$DB_USERNAME" "$$DB_NAME" > /tmp/backup.sql; then
+          mv /tmp/backup.sql /backups/trackseries-$$timestamp.sql;
+          echo "Backup successful: trackseries-$$timestamp.sql";
+        else
+          echo "Backup failed!";
+        fi;
         find /backups -type f -name "trackseries-*.sql" -mtime +14 -delete;
         sleep $$BACKUP_INTERVAL_SECONDS;
       done

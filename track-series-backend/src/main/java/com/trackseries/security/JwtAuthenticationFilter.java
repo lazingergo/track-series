@@ -51,35 +51,43 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         // Extract the token after the Bearer prefix.
         jwt = authHeader.substring(7);
 
-        userName = jwtService.extractUsername(jwt);
+        try {
+            userName = jwtService.extractUsername(jwt);
 
-        if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            UserDetails userDetails = this.userDetailsService.loadUserByUsername(userName);
-            // if the token is valid
-            if (jwtService.isTokenValid(jwt, userDetails)) {
-                UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                        userDetails,
-                        null,
-                        userDetails.getAuthorities()
-                );
+            if (userName != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                UserDetails userDetails = this.userDetailsService.loadUserByUsername(userName);
+                // if the token is valid
+                if (jwtService.isTokenValid(jwt, userDetails)) {
+                    UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                            userDetails,
+                            null,
+                            userDetails.getAuthorities()
+                    );
 
-                authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                    authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
 
-                SecurityContextHolder.getContext().setAuthentication(authToken);
-                log.debug(
-                        "JWT authentication set for user '{}' on {} {}",
-                        userName,
-                        request.getMethod(),
-                        request.getRequestURI()
-                );
-            } else {
-                log.warn(
-                        "Invalid JWT token for user '{}' on {} {}",
-                        userName,
-                        request.getMethod(),
-                        request.getRequestURI()
-                );
+                    SecurityContextHolder.getContext().setAuthentication(authToken);
+                    log.debug(
+                            "JWT authentication set for user '{}' on {} {}",
+                            userName,
+                            request.getMethod(),
+                            request.getRequestURI()
+                    );
+                } else {
+                    log.warn(
+                            "Invalid JWT token for user '{}' on {} {}",
+                            userName,
+                            request.getMethod(),
+                            request.getRequestURI()
+                    );
+                }
             }
+        } catch (io.jsonwebtoken.JwtException e) {
+            log.warn("JWT validation failed: {} on {} {}", e.getMessage(), request.getMethod(), request.getRequestURI());
+            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+            response.setContentType("application/json");
+            response.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Invalid or expired JWT token\"}");
+            return;
         }
 
         filterChain.doFilter(request, response);

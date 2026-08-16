@@ -76,7 +76,7 @@ public class UpNextService {
 
         List<Episode> allEpisodesForTrackedSeries = episodeRepository.findNextEpisodesForSeriesIds(seriesIds, 0);
         allEpisodesForTrackedSeries = allEpisodesForTrackedSeries.stream()
-            .filter(ep -> Boolean.TRUE.equals(ep.getWatchable()))
+            .filter(Episode::isWatchable)
             .toList();
 
         Map<Long, List<Episode>> episodesBySeriesId = allEpisodesForTrackedSeries.stream()

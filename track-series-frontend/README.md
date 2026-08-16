@@ -1,62 +1,40 @@
 # Track Series Frontend
 
-React frontend for the Track Series application.
-
-This app provides the user interface for searching series, managing tracked shows, and viewing watch-related pages.
-
-## Main Responsibilities
-
-- Render UI pages and navigation
-- Handle auth state on the client
-- Call backend API endpoints
-- Display search and tracking results
+The frontend of the Track Series application is a Single Page Application (SPA) built with React. It provides a clean, responsive, and interactive user interface for managing TV series collections.
 
 ## Tech Stack
 
-- React 19
-- React Router
-- Axios
-- Vite
-- Nginx (in Docker production image)
+- **React 19**: The core UI library.
+- **Vite**: A fast build tool and development server.
+- **React Router**: For client-side routing and navigation between pages (Profile, Series Details, Search).
+- **Axios**: For making HTTP requests to the backend API.
+- **TailwindCSS**: For rapid, utility-first styling.
 
-## Run Locally
+## How It Works
 
-### 1. Prerequisites
+1. **Authentication**: User sessions are managed via JWT (JSON Web Tokens). Upon successful login or registration, the token is stored in the browser's local storage and attached to the `Authorization` header of all subsequent API requests via Axios interceptors.
+2. **State Management**: The application uses React's native hooks (`useState`, `useEffect`, `useContext`) to manage local component state and global authentication state.
+3. **API Communication**: The frontend interacts exclusively with the local Spring Boot backend. It does not communicate directly with the TVMaze API.
+4. **Production Routing**: In the Docker production environment, an Nginx server serves the static React files and acts as a reverse proxy, forwarding requests starting with `/api` to the backend container to bypass CORS issues.
 
-- Node.js 22+
-- npm
+## Running Locally (Development)
 
-### 2. Install dependencies
+1. Ensure Node.js (version 22+) and npm are installed.
+2. Install the project dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the Vite development server:
+   ```bash
+   npm run dev
+   ```
+   The application will be available at `http://localhost:5173`. 
+   Note: The Vite development server is configured to proxy `/api` requests to `http://localhost:8080` (the default local backend port).
 
-```bash
-npm install
-```
+## Building for Production
 
-### 3. Start development server
-
-```bash
-npm run dev
-```
-
-Default dev URL:
-- http://localhost:5173
-
-## Build
-
+To create an optimized production build:
 ```bash
 npm run build
 ```
-
-Build output is generated in:
-- dist/
-
-## API Communication
-
-- In Docker, frontend API requests are proxied by Nginx from /api to backend service.
-- For local development, ensure backend is running and API base URL is configured as needed.
-
-## Implementation Notes
-
-- Routing and page composition live under src/pages and related components.
-- Shared API communication logic is centralized under src/api.
-- Authentication state is handled via context/hooks in src/context.
+The compiled static assets will be generated in the `dist/` directory.

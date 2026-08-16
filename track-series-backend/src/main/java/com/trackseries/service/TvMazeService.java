@@ -112,7 +112,6 @@ public class TvMazeService {
                 episode.setEpisodeNumber(epDto.getNumber());
                 episode.setAirdate(epDto.getAirdate());
                 episode.setSummary(epDto.getSummary());
-                episode.setWatchable(isWatchable(epDto.getAirdate()));
                 // set the episode for the series, and the series for the episode.
                 episode.setSeries(series);
                 series.getEpisodes().add(episode);
@@ -132,7 +131,7 @@ public class TvMazeService {
 
     @Transactional
     public int refreshSeriesEpisodes(Long tvMazeId) {
-        Series series = seriesRepository.findById(tvMazeId)
+        Series series = seriesRepository.findByIdWithLock(tvMazeId)
             .orElseThrow(() -> new ResourceNotFoundException("Series not found with id " + tvMazeId));
 
         TvMazeSeriesDto dto = restClient.get()
@@ -163,8 +162,11 @@ public class TvMazeService {
 
         int addedEpisodes = 0;
         int updatedEpisodes = 0;
+        Set<Long> tvMazeEpisodeIds = new HashSet<>();
+
         if (dto.getEmbedded() != null && dto.getEmbedded().getEpisodes() != null) {
             for (var epDto : dto.getEmbedded().getEpisodes()) {
+                tvMazeEpisodeIds.add(epDto.getId());
                 Episode episode = existingEpisodeIds.get(epDto.getId());
 
                 if(episode == null) {
@@ -188,18 +190,18 @@ public class TvMazeService {
             }
         }
 
+        // Remove orphaned episodes
+        boolean removedOrphans = series.getEpisodes().removeIf(ep -> !tvMazeEpisodeIds.contains(ep.getId()));
+
         seriesRepository.save(series);
         log.info(
-            "Series refreshed, tvMazeId={}, addedEpisodes={}, updatedEpisodes={}",
+            "Series refreshed, tvMazeId={}, addedEpisodes={}, updatedEpisodes={}, orphansRemoved={}",
             tvMazeId,
             addedEpisodes,
-            updatedEpisodes
+            updatedEpisodes,
+            removedOrphans
         );
         return addedEpisodes;
-    }
-
-    private boolean isWatchable(LocalDate airdate) {
-        return airdate != null && !airdate.isAfter(LocalDate.now());
     }
 
     private void applyEpisodeData(Episode episode, TvMazeEpisodeDto epDto) {
@@ -208,7 +210,6 @@ public class TvMazeService {
         episode.setEpisodeNumber(epDto.getNumber());
         episode.setAirdate(epDto.getAirdate());
         episode.setSummary(epDto.getSummary());
-        episode.setWatchable(isWatchable(epDto.getAirdate()));
     }
 
     public List<SeriesSearchResultDto> searchShows(String query, String username) {
