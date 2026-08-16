@@ -86,7 +86,7 @@ public class SeriesDetailsService {
             item.setSeasonNumber(ep.getSeasonNumber());
             item.setEpisodeNumber(ep.getEpisodeNumber());
             item.setTitle(ep.getTitle());
-            item.setWatchable(Boolean.TRUE.equals(ep.getWatchable()));
+            item.setWatchable(ep.isWatchable());
             item.setWatched(watchedEpisodeIds.contains(ep.getId()));
             return item;
         }).collect(Collectors.toList());
