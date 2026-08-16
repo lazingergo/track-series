@@ -1,86 +1,41 @@
 # Track Series Backend
 
-Spring Boot backend for the Track Series application.
-
-It handles authentication, series search/tracking business logic, integration with TVMaze, and persistence in MySQL.
-
-## Main Responsibilities
-
-- Expose REST API endpoints for frontend clients
-- Handle authentication and security
-- Query external TVMaze API when needed
-- Store and reuse fetched data in local database
-- Manage tracked series and episode state
+The backend of the Track Series application is a robust RESTful API built with Spring Boot. It serves as the central bridge between the React frontend, the local MySQL database, and the external TVMaze API.
 
 ## Tech Stack
 
-- Java 21
-- Spring Boot 4
-- Spring Web
-- Spring Security
-- Spring Data JPA
-- Flyway
-- MySQL
+- **Java 21**: The core programming language.
+- **Spring Boot 4**: Framework for dependency injection, REST endpoints, and application context.
+- **Spring Security & JWT**: For securing endpoints and handling stateless user authentication.
+- **Spring Data JPA & Hibernate**: For database interactions and ORM.
+- **Flyway**: For automated database schema migrations.
+- **MySQL**: The primary relational database.
 
-## Run Locally
+## How It Works
 
-### 1. Prerequisites
+1. **API Abstraction**: The backend exposes endpoints under `/api/` for the frontend to consume.
+2. **Local Data Persistence**: Instead of proxying every request to TVMaze, the backend downloads the series metadata and episode lists and stores them in the local MySQL database.
+3. **Scheduled Refresh**: A scheduled background job automatically checks for new episodes of "ongoing" series every week. 
+4. **Concurrency Control**: Manual refreshes are protected by pessimistic database locking to prevent race conditions and duplicate entries.
 
-- JDK 21
-- MySQL running locally
+## Database Backup Mechanism
 
-### 2. Configure database and secret
+Data integrity is a priority. The Docker environment includes an automated database backup mechanism.
 
-You can use either environment variables or property files.
+- A dedicated container (`trackseries-db-backup`) runs alongside the main database.
+- It executes a scheduled `mysqldump` script at a configurable interval (defined by `BACKUP_INTERVAL_SECONDS` in the `.env` file, default is every 24 hours).
+- Backups are saved as `.sql` files in the host directory specified by `BACKUP_DIR` (default is `./backups`).
+- To prevent disk exhaustion, the script automatically deletes backup files older than 14 days.
 
-Common required values:
-- DB_HOST
-- DB_PORT
-- DB_NAME
-- DB_USERNAME
-- DB_PASSWORD or DB_ROOT_PASSWORD
-- JWT_SECRET (or LOCAL_JWT_SECRET for local-only setup)
+## Running Locally (Development)
 
-### 3. Start backend
+If you wish to run the backend outside of Docker:
 
-```bash
-./gradlew bootRun
-```
-
-Default application port inside app: 8080.
-
-## Profiles
-
-The backend supports multiple Spring profiles through application property files.
-
-Typical files:
-- application.properties
-- application-develop.properties
-- application-local.properties
-- application-main.properties
-
-Choose active profile with environment variable:
-
-```bash
-SPRING_PROFILES_ACTIVE=local
-```
-
-## Implementation Notes
-
-- API data strategy:
-    - First read from local database
-    - Call TVMaze only when data is missing or needs refresh
-    - Persist fetched results for future requests
-- This approach keeps external API usage lower and improves response times for repeated queries.
-
-## Database
-
-- MySQL is used as the primary data store.
-- Flyway manages schema migration.
-
-If needed, create database manually:
-
-```sql
-CREATE DATABASE track_series;
-```
-
+1. Ensure Java 21 and a local MySQL instance are installed.
+2. Create the `track_series` database manually if Flyway does not have permissions.
+3. Set the required environment variables (`DB_USERNAME`, `DB_PASSWORD`, `JWT_SECRET`, etc.).
+4. Run the Spring Boot application:
+   ```bash
+   ./gradlew bootRun
+   ```
+   The backend will start on `http://localhost:8080`.

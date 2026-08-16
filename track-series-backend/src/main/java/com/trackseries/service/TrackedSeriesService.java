@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -170,6 +172,92 @@ public class TrackedSeriesService {
         trackedSeriesRepository.delete(tracked);
 
         log.info("Series removed from collection, userId={}, seriesId={}", user.getId(), seriesId);
+    }
+
+    @Transactional
+    public TrackedSeries refreshTrackedSeriesForUsername(String username, Long seriesId) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
+
+        TrackedSeries tracked = trackedSeriesRepository.findByUserIdAndSeriesId(user.getId(), seriesId)
+            .orElseThrow(() -> new ResourceNotFoundException("Series not found in user collection"));
+
+        tvMazeService.refreshSeriesEpisodes(seriesId);
+        syncCompletedStatusAfterRefresh(user.getId(), tracked);
+        return trackedSeriesRepository.save(tracked);
+    }
+
+    @Transactional
+    public List<TrackedSeries> refreshOngoingTrackedSeriesForUsername(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
+
+        List<TrackedSeries> trackedSeriesList = trackedSeriesRepository.findByUserId(user.getId());
+        List<TrackedSeries> refreshed = new ArrayList<>();
+
+        for (TrackedSeries tracked : trackedSeriesList) {
+            if (isSeriesOngoing(tracked.getSeries())) {
+                tvMazeService.refreshSeriesEpisodes(tracked.getSeries().getId());
+                syncCompletedStatusAfterRefresh(user.getId(), tracked);
+                refreshed.add(trackedSeriesRepository.save(tracked));
+            }
+        }
+
+        return refreshed;
+    }
+
+    @Transactional
+    public List<Long> activeSeries(Long userId) {
+        return trackedSeriesRepository.findDistinctSeriesIdsByUserIdAndStatusIn(
+            userId,
+            List.of(WatchStatus.WATCHING, WatchStatus.PLAN_TO_WATCH)
+        );
+    }
+
+    @Transactional
+    public List<Long> activeSeriesForUsername(String username) {
+        User user = userRepository.findByUsername(username)
+            .orElseThrow(() -> new ResourceNotFoundException("User cannot find with this username " + username));
+
+        return activeSeries(user.getId());
+    }
+
+    private boolean isSeriesOngoing(Series series) {
+        if (series.getEnded() != null) {
+            return false;
+        }
+
+        String status = series.getStatus();
+        return status == null || !"ended".equalsIgnoreCase(status);
+    }
+
+    private void syncCompletedStatusAfterRefresh(Long userId, TrackedSeries tracked) {
+        if (tracked.getStatus() != WatchStatus.COMPLETED) {
+            return;
+        }
+
+        Long seriesId = tracked.getSeries().getId();
+        long totalEpisodes = episodeCountForSeries(seriesId);
+        long watchedEpisodes = watchedEpisodeRepository.countNextEpisodes(userId, seriesId, 0);
+
+        if (watchedEpisodes < totalEpisodes) {
+            tracked.setStatus(watchedEpisodes > 0 ? WatchStatus.WATCHING : WatchStatus.PLAN_TO_WATCH);
+            log.info(
+                "Status changed after refresh, userId={}, seriesId={}, oldStatus={}, newStatus={}",
+                userId,
+                seriesId,
+                WatchStatus.COMPLETED,
+                tracked.getStatus()
+            );
+        }
+    }
+
+    private long episodeCountForSeries(Long seriesId) {
+        return seriesRepository.findById(seriesId)
+            .map(series -> series.getEpisodes().stream()
+                .filter(ep -> ep.getSeasonNumber() != null && ep.getSeasonNumber() > 0)
+                .count())
+            .orElse(0L);
     }
 
 }

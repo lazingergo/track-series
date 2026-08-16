@@ -75,6 +75,10 @@ public class UpNextService {
                 .toList();
 
         List<Episode> allEpisodesForTrackedSeries = episodeRepository.findNextEpisodesForSeriesIds(seriesIds, 0);
+        allEpisodesForTrackedSeries = allEpisodesForTrackedSeries.stream()
+            .filter(Episode::isWatchable)
+            .toList();
+
         Map<Long, List<Episode>> episodesBySeriesId = allEpisodesForTrackedSeries.stream()
                 .collect(Collectors.groupingBy(ep -> ep.getSeries().getId(), HashMap::new, Collectors.toList()));
 

@@ -6,6 +6,7 @@ export default function Profile() {
   const navigate = useNavigate();
   const [profile, setProfile] = useState({ username: '', series: [] });
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState('');
 
   const sectionConfig = [
@@ -16,24 +17,38 @@ export default function Profile() {
   ];
 
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await api.get('/profile/me');
-        setProfile({
-          username: response.data?.username || '',
-          series: Array.isArray(response.data?.series) ? response.data.series : [],
-        });
-        setError('');
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load profile.');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchProfile();
   }, []);
+
+  const fetchProfile = async () => {
+    try {
+      const response = await api.get('/profile/me');
+      setProfile({
+        username: response.data?.username || '',
+        series: Array.isArray(response.data?.series) ? response.data.series : [],
+      });
+      setError('');
+    } catch (err) {
+      console.error(err);
+      setError('Failed to load profile.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefreshOngoingSeries = async () => {
+    try {
+      setRefreshing(true);
+      setError('');
+      await api.post('/collection/refresh-ongoing');
+      await fetchProfile();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to refresh ongoing series.');
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   if (loading) {
     return <div className="text-center text-gray-500 mt-10 animate-pulse">Loading profile...</div>;
@@ -49,10 +64,22 @@ export default function Profile() {
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
       <div className="bg-tvcard p-6 rounded-2xl border border-gray-800 shadow-lg">
-        <h1 className="text-2xl font-bold text-white">Profile</h1>
-        <p className="text-gray-300 mt-2">
-          Username: <span className="text-tvprimary font-semibold">{profile.username}</span>
-        </p>
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold text-white">Profile</h1>
+            <p className="text-gray-300 mt-2">
+              Username: <span className="text-tvprimary font-semibold">{profile.username}</span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleRefreshOngoingSeries}
+            disabled={refreshing}
+            className="px-3 py-2 rounded-lg bg-tvprimary text-black text-sm font-semibold hover:bg-yellow-400 transition disabled:opacity-50"
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh Ongoing Series'}
+          </button>
+        </div>
       </div>
 
       {error && <div className="text-red-400">{error}</div>}

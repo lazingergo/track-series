@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'com'
-version = '0.0.1-SNAPSHOT'
+version = '0.1.0'
 description = 'track-series-backend'
 
 apply from: "$rootDir/lint.gradle"
@@ -44,6 +44,7 @@ dependencies {
 
     // JPA + Hibernate
     implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-flyway'
     implementation 'org.flywaydb:flyway-core'
     runtimeOnly 'org.flywaydb:flyway-mysql'
 

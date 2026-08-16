@@ -34,6 +34,10 @@ public class Episode {
     @Column(columnDefinition = "TEXT")
     private String summary;
 
+    public boolean isWatchable() {
+        return airdate != null && !airdate.isAfter(LocalDate.now());
+    }
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "series_id")
     @JsonIgnore

@@ -12,6 +12,7 @@ export default function SeriesDetails() {
   const [loading, setLoading] = useState(true);
   const [statusUpdating, setStatusUpdating] = useState(false);
   const [deletingSeries, setDeletingSeries] = useState(false);
+  const [refreshingSeries, setRefreshingSeries] = useState(false);
   const [error, setError] = useState('');
   const [watchDialogOpen, setWatchDialogOpen] = useState(false);
   const [selectedEpisode, setSelectedEpisode] = useState(null);
@@ -36,8 +37,15 @@ export default function SeriesDetails() {
   }, [fetchDetails]);
 
   const handleToggleWatched = async (episode) => {
+    const isWatched = Boolean(episode.watched ?? episode.isWatched);
+    const isWatchable = episode.watchable !== false;
+
+    if (!isWatchable && !isWatched) {
+      return;
+    }
+
     try {
-      if (episode.watched) {
+      if (isWatched) {
         await api.delete(`/episodes/${episode.id}/watch`);
       } else {
         setSelectedEpisode(episode);
@@ -116,6 +124,24 @@ export default function SeriesDetails() {
     }
   };
 
+  const handleRefreshSeries = async () => {
+    if (!details?.userStatus || refreshingSeries) {
+      return;
+    }
+
+    try {
+      setRefreshingSeries(true);
+      setError('');
+      await api.post(`/collection/${seriesId}/refresh`);
+      fetchDetails();
+    } catch (err) {
+      console.error(err);
+      setError('Failed to refresh series episodes.');
+    } finally {
+      setRefreshingSeries(false);
+    }
+  };
+
   if (loading) {
     return <div className="text-center text-gray-500 mt-10 animate-pulse">Loading series...</div>;
   }
@@ -126,6 +152,9 @@ export default function SeriesDetails() {
 
   const showStatusToggle = details.userStatus === 'WATCHING' || details.userStatus === 'DROPPED';
   const showDeleteButton = Boolean(details.userStatus);
+
+  const normalizeWatched = (episode) => Boolean(episode.watched ?? episode.isWatched);
+  const normalizeWatchable = (episode) => episode.watchable !== false;
 
   return (
     <div className="max-w-5xl mx-auto flex flex-col gap-6">
@@ -151,6 +180,16 @@ export default function SeriesDetails() {
                     : details.userStatus === 'WATCHING'
                       ? 'Stop Watching'
                       : 'Continue Watching'}
+                </button>
+              )}
+              {showDeleteButton && (
+                <button
+                  type="button"
+                  onClick={handleRefreshSeries}
+                  disabled={refreshingSeries || deletingSeries || statusUpdating}
+                  className="shrink-0 px-3 py-2 rounded-lg bg-tvprimary hover:bg-yellow-400 text-black text-sm font-semibold transition disabled:opacity-50"
+                >
+                  {refreshingSeries ? 'Refreshing...' : 'Refresh Episodes'}
                 </button>
               )}
               {showDeleteButton && (
@@ -182,17 +221,27 @@ export default function SeriesDetails() {
             <button
               type="button"
               key={episode.id}
+              disabled={!normalizeWatchable(episode) && !normalizeWatched(episode)}
               onClick={() => handleToggleWatched(episode)}
-              className="w-full flex items-center justify-between px-5 py-3 hover:bg-gray-900 transition"
+              className={`w-full flex items-center justify-between px-5 py-3 transition ${
+                !normalizeWatchable(episode) && !normalizeWatched(episode)
+                  ? 'opacity-50 cursor-not-allowed bg-gray-950'
+                  : 'hover:bg-gray-900'
+              }`}
             >
               <div className="text-left">
                 <p className="text-sm text-tvprimary font-medium">
                   {formatEpisode(episode.seasonNumber, episode.episodeNumber)}
                 </p>
                 <p className="text-white text-sm">{episode.title}</p>
+                {!normalizeWatchable(episode) && !normalizeWatched(episode) && (
+                  <p className="text-xs text-gray-500 mt-1">Not released yet</p>
+                )}
               </div>
-              <span className={`text-xs font-semibold ${episode.watched ? 'text-green-400' : 'text-gray-400'}`}>
-                {episode.watched ? 'WATCHED ✓' : 'NOT WATCHED'}
+              <span
+                className={`text-xs font-semibold ${normalizeWatched(episode) ? 'text-green-400' : 'text-gray-400'}`}
+              >
+                {normalizeWatched(episode) ? 'WATCHED ✓' : 'NOT WATCHED'}
               </span>
             </button>
           ))}

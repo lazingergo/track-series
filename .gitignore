@@ -1,7 +1,8 @@
-# .env files
+# Environment files
 .env
-
+.env.*
 !.env.example
-
-# ci
 ci-local.sh
+
+# Local backup dumps
+backups/
