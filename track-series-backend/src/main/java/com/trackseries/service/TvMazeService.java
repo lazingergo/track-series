@@ -131,7 +131,7 @@ public class TvMazeService {
 
     @Transactional
     public int refreshSeriesEpisodes(Long tvMazeId) {
-        Series series = seriesRepository.findById(tvMazeId)
+        Series series = seriesRepository.findByIdWithLock(tvMazeId)
             .orElseThrow(() -> new ResourceNotFoundException("Series not found with id " + tvMazeId));
 
         TvMazeSeriesDto dto = restClient.get()
