@@ -56,14 +56,23 @@ The backend supports multiple Spring profiles through application property files
 Typical files:
 - application.properties
 - application-develop.properties
-- application-local.properties
 - application-main.properties
+- application-test.properties
+
+Current default profile for local startup:
+- develop
+
+This means plain `./gradlew bootRun` loads:
+- common defaults from `application.properties`
+- developer logging from `application-develop.properties`
 
 Choose active profile with environment variable:
 
 ```bash
-SPRING_PROFILES_ACTIVE=local
+SPRING_PROFILES_ACTIVE=develop
 ```
+
+Production-style runs should set one explicit profile (for example `main`) and provide required environment variables through the runtime environment.
 
 ## Implementation Notes
 
